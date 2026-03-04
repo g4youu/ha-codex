@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -9,14 +11,18 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import MAX_AI_FILE_CONTEXT_BYTES, load_settings
+from .home_assistant_api import call_service, get_states
 from .models import (
     ApplyOperationsRequest,
+    ChatRequest,
+    FileOperation,
     PlanRequest,
     ReadFileRequest,
+    ServiceCallOperation,
     ValidateFileRequest,
     WriteFileRequest,
 )
-from .openai_client import generate_plan
+from .openai_client import generate_chat_result, generate_plan
 from .policy import enforce_content_policy, enforce_goal_policy
 from .security import resolve_allowed_path
 from .storage import (
@@ -36,11 +42,12 @@ SETTINGS = load_settings()
 logging.basicConfig(level=SETTINGS.log_level.upper(), format="%(levelname)s %(message)s")
 LOGGER = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"
+SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.1.0",
-    description="Safe, allowlisted YAML editing API for Home Assistant.",
+    version="0.2.0",
+    description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -151,6 +158,77 @@ def _enforce_manual_approval_or_412(approval_phrase: str | None, dry_run: bool) 
     )
 
 
+def _effective_include_state_context(request_flag: bool | None) -> bool:
+    if request_flag is None:
+        return SETTINGS.include_state_context
+    return bool(request_flag)
+
+
+def _validate_service_call_or_400(call: ServiceCallOperation) -> tuple[str, str, dict[str, Any]]:
+    domain = call.domain.strip().lower()
+    service = call.service.strip().lower()
+    if not domain or not SERVICE_TOKEN_PATTERN.fullmatch(domain):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid service domain: {call.domain!r}",
+        )
+    if not service or not SERVICE_TOKEN_PATTERN.fullmatch(service):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid service name: {call.service!r}",
+        )
+
+    allowed_domains = {entry.strip().lower() for entry in SETTINGS.allowed_service_domains if entry.strip()}
+    if domain not in allowed_domains:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"Service domain '{domain}' is not allowed. "
+                f"Allowed domains: {sorted(allowed_domains)}"
+            ),
+        )
+
+    payload_text = f"{domain}.{service} {json.dumps(call.data, sort_keys=True)}"
+    _enforce_content_policy_or_400(payload_text)
+    return domain, service, call.data
+
+
+def _normalize_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
+    normalized: list[dict[str, str]] = []
+    for item in history[-12:]:
+        role = (item.get("role") or "").strip().lower()
+        content = (item.get("content") or "").strip()
+        if role not in {"user", "assistant"}:
+            continue
+        if not content:
+            continue
+        normalized.append({"role": role, "content": content[:4000]})
+    return normalized
+
+
+def _chat_file_context(request: ChatRequest) -> dict[str, str]:
+    context: dict[str, str] = {}
+    for raw_path in request.files:
+        path, relative = _resolve_or_400(raw_path)
+        context[relative] = _read_for_ai_context(path)
+    return context
+
+
+def _chat_state_context(request: ChatRequest) -> tuple[list[dict[str, Any]], str | None]:
+    if not _effective_include_state_context(request.include_state_context):
+        return [], None
+    entity_ids = [item.strip() for item in request.entity_ids if item.strip()]
+    try:
+        states = get_states(
+            entity_ids=entity_ids or None,
+            limit=SETTINGS.max_state_context_entities,
+        )
+        return states, None
+    except Exception as exc:
+        LOGGER.warning("Unable to read Home Assistant states for chat context: %s", exc)
+        return [], f"State context unavailable: {exc}"
+
+
 @app.get("/", include_in_schema=False)
 def panel() -> FileResponse:
     index_path = STATIC_DIR / "index.html"
@@ -170,6 +248,9 @@ def health() -> dict[str, Any]:
         "max_apply_operations": SETTINGS.max_apply_operations,
         "max_diff_chars": SETTINGS.max_diff_chars,
         "allow_dangerous_changes": SETTINGS.allow_dangerous_changes,
+        "allowed_service_domains": list(SETTINGS.allowed_service_domains),
+        "max_service_calls": SETTINGS.max_service_calls,
+        "include_state_context": SETTINGS.include_state_context,
     }
 
 
@@ -427,4 +508,232 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
         "model": SETTINGS.openai_model,
         "max_operations": requested_max_ops,
         "operations": validated,
+    }
+
+
+@app.post("/chat", dependencies=[Depends(require_auth)])
+def chat(request: ChatRequest) -> dict[str, Any]:
+    if not SETTINGS.openai_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="openai_api_key is not configured in add-on options.",
+        )
+
+    message = request.message.strip()
+    if not message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="message is required.")
+    _enforce_goal_policy_or_400(message)
+
+    requested_max_ops = min(request.max_operations, SETTINGS.max_apply_operations)
+    requested_max_service_calls = min(request.max_service_calls, SETTINGS.max_service_calls)
+    history = _normalize_history(
+        [{"role": item.role, "content": item.content} for item in request.history]
+    )
+    file_context = _chat_file_context(request)
+    state_context, state_warning = _chat_state_context(request)
+
+    try:
+        model_result = generate_chat_result(
+            api_key=SETTINGS.openai_api_key,
+            model=SETTINGS.openai_model,
+            message=message,
+            history=history,
+            file_context=file_context,
+            state_context=state_context,
+            allowed_service_domains=SETTINGS.allowed_service_domains,
+            max_file_operations=requested_max_ops,
+            max_service_calls=requested_max_service_calls,
+        )
+    except Exception as exc:
+        LOGGER.exception("Failed to generate chat response")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Chat generation failed: {exc}",
+        ) from exc
+
+    assistant_message = str(model_result.get("assistant_message", "")).strip()
+    if not assistant_message:
+        assistant_message = "I prepared a safe plan based on your request."
+
+    raw_file_operations = model_result.get("file_operations", [])
+    if not isinstance(raw_file_operations, list):
+        raw_file_operations = []
+    raw_service_calls = model_result.get("service_calls", [])
+    if not isinstance(raw_service_calls, list):
+        raw_service_calls = []
+
+    prepared_file_ops: list[dict[str, Any]] = []
+    for item in raw_file_operations[:requested_max_ops]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            op = FileOperation.model_validate(item)
+            path, relative = _resolve_or_400(op.path)
+            if _is_yaml(path):
+                validate_yaml(op.content)
+            _enforce_content_policy_or_400(op.content)
+            old_content = _read_existing(path)
+            diff = unified_diff(path, old_content, op.content)
+            _enforce_diff_size_or_400(diff)
+        except Exception:
+            continue
+        prepared_file_ops.append(
+            {
+                "path_obj": path,
+                "path": relative,
+                "content": op.content,
+                "expected_sha256": op.expected_sha256,
+                "reason": op.reason,
+                "diff": diff,
+            }
+        )
+
+    prepared_service_calls: list[dict[str, Any]] = []
+    for item in raw_service_calls[:requested_max_service_calls]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            call = ServiceCallOperation.model_validate(item)
+            domain, service, data = _validate_service_call_or_400(call)
+        except Exception:
+            continue
+        prepared_service_calls.append(
+            {
+                "domain": domain,
+                "service": service,
+                "data": data,
+                "reason": call.reason,
+            }
+        )
+
+    dry_run = _effective_dry_run(request.dry_run)
+    execution_results: dict[str, Any] | None = None
+    executed = False
+
+    if request.execute:
+        _enforce_manual_approval_or_412(request.approval_phrase, dry_run)
+        file_results: list[dict[str, Any]] = []
+        for entry in prepared_file_ops:
+            if dry_run:
+                file_results.append(
+                    {
+                        "path": entry["path"],
+                        "reason": entry["reason"],
+                        "applied": False,
+                        "dry_run": True,
+                        "proposed_sha256": sha256_text(entry["content"]),
+                        "diff": entry["diff"],
+                    }
+                )
+                continue
+
+            backup_path = None
+            if request.backup:
+                backup_path = backup_existing(entry["path_obj"], Path(entry["path"]))
+            try:
+                write_text_atomic(
+                    entry["path_obj"],
+                    entry["content"],
+                    expected_sha256=entry["expected_sha256"],
+                )
+            except FileHashMismatchError as exc:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+            except ValueError as exc:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+            file_results.append(
+                {
+                    "path": entry["path"],
+                    "reason": entry["reason"],
+                    "applied": True,
+                    "dry_run": False,
+                    "backup_path": backup_path.as_posix() if backup_path else None,
+                    "sha256": sha256_file(entry["path_obj"]),
+                    "diff": entry["diff"],
+                }
+            )
+
+        service_results: list[dict[str, Any]] = []
+        for entry in prepared_service_calls:
+            if dry_run:
+                service_results.append(
+                    {
+                        "domain": entry["domain"],
+                        "service": entry["service"],
+                        "data": entry["data"],
+                        "reason": entry["reason"],
+                        "applied": False,
+                        "dry_run": True,
+                    }
+                )
+                continue
+            try:
+                result = call_service(entry["domain"], entry["service"], entry["data"])
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Service call failed for {entry['domain']}.{entry['service']}: {exc}",
+                ) from exc
+            service_results.append(
+                {
+                    "domain": entry["domain"],
+                    "service": entry["service"],
+                    "data": entry["data"],
+                    "reason": entry["reason"],
+                    "applied": True,
+                    "dry_run": False,
+                    "result": result,
+                }
+            )
+
+        execution_results = {
+            "file_operations": file_results,
+            "service_calls": service_results,
+        }
+        executed = not dry_run
+        append_audit(
+            action="chat_execute",
+            payload={
+                "dry_run": dry_run,
+                "file_operations": len(prepared_file_ops),
+                "service_calls": len(prepared_service_calls),
+            },
+        )
+
+    append_audit(
+        action="chat",
+        payload={
+            "message_length": len(message),
+            "returned_file_operations": len(prepared_file_ops),
+            "returned_service_calls": len(prepared_service_calls),
+            "execute_requested": request.execute,
+            "dry_run": dry_run,
+        },
+    )
+
+    return {
+        "model": SETTINGS.openai_model,
+        "assistant_message": assistant_message,
+        "state_warning": state_warning,
+        "dry_run": dry_run,
+        "execute_requested": request.execute,
+        "executed": executed,
+        "file_operations": [
+            {
+                "path": entry["path"],
+                "reason": entry["reason"],
+                "content": entry["content"],
+                "diff": entry["diff"],
+            }
+            for entry in prepared_file_ops
+        ],
+        "service_calls": [
+            {
+                "domain": entry["domain"],
+                "service": entry["service"],
+                "data": entry["data"],
+                "reason": entry["reason"],
+            }
+            for entry in prepared_service_calls
+        ],
+        "execution_results": execution_results,
     }

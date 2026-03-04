@@ -1,6 +1,6 @@
 name: "Codex Assistant"
-description: "Secure AI-assisted Home Assistant YAML editor"
-version: "0.1.0"
+description: "Secure AI-assisted Home Assistant chat and automation assistant"
+version: "0.2.0"
 slug: "codex_assistant"
 url: "https://github.com/g4youu/ha-codex.git"
 arch:
@@ -34,6 +34,10 @@ options:
   forbidden_tokens: "shell_command:,command_line:,python_script:,rest_command:,service: homeassistant.restart,service: hassio.host_reboot,service: hassio.host_shutdown,service: hassio.addon_start,service: hassio.addon_stop,service: hassio.addon_restart"
   max_apply_operations: 5
   max_diff_chars: 40000
+  allowed_service_domains: "light,switch,scene,script,automation,input_boolean,input_number,media_player,cover,climate,fan,lock,notify"
+  max_service_calls: 4
+  include_state_context: true
+  max_state_context_entities: 80
 schema:
   log_level: list(trace|debug|info|notice|warning|error|fatal)
   auth_token: password?
@@ -46,5 +50,9 @@ schema:
   forbidden_tokens: str?
   max_apply_operations: int(1,10)?
   max_diff_chars: int(500,200000)?
+  allowed_service_domains: str?
+  max_service_calls: int(1,10)?
+  include_state_context: bool?
+  max_state_context_entities: int(10,500)?
 ports: {}
 ports_description: {}

@@ -34,4 +34,16 @@ MAX_APPLY_OPERATIONS="$(bashio::config 'max_apply_operations')"
 export MAX_DIFF_CHARS
 MAX_DIFF_CHARS="$(bashio::config 'max_diff_chars')"
 
+export ALLOWED_SERVICE_DOMAINS
+ALLOWED_SERVICE_DOMAINS="$(bashio::config 'allowed_service_domains')"
+
+export MAX_SERVICE_CALLS
+MAX_SERVICE_CALLS="$(bashio::config 'max_service_calls')"
+
+export INCLUDE_STATE_CONTEXT
+INCLUDE_STATE_CONTEXT="$(bashio::config 'include_state_context')"
+
+export MAX_STATE_CONTEXT_ENTITIES
+MAX_STATE_CONTEXT_ENTITIES="$(bashio::config 'max_state_context_entities')"
+
 exec uvicorn src.main:app --host 0.0.0.0 --port 8099

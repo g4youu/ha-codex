@@ -14,6 +14,7 @@ MAX_FILE_SIZE_BYTES = 512 * 1024
 MAX_AI_FILE_CONTEXT_BYTES = 64 * 1024
 MAX_APPLY_OPERATIONS = 10
 MAX_DIFF_CHARS_HARD_LIMIT = 200_000
+MAX_SERVICE_CALLS_HARD_LIMIT = 10
 DEFAULT_FORBIDDEN_TOKENS = (
     "shell_command:",
     "command_line:",
@@ -25,6 +26,21 @@ DEFAULT_FORBIDDEN_TOKENS = (
     "service: hassio.addon_start",
     "service: hassio.addon_stop",
     "service: hassio.addon_restart",
+)
+DEFAULT_ALLOWED_SERVICE_DOMAINS = (
+    "light",
+    "switch",
+    "scene",
+    "script",
+    "automation",
+    "input_boolean",
+    "input_number",
+    "media_player",
+    "cover",
+    "climate",
+    "fan",
+    "lock",
+    "notify",
 )
 
 
@@ -41,6 +57,10 @@ class Settings:
     forbidden_tokens: tuple[str, ...]
     max_apply_operations: int
     max_diff_chars: int
+    allowed_service_domains: tuple[str, ...]
+    max_service_calls: int
+    include_state_context: bool
+    max_state_context_entities: int
 
 
 def _as_bool(raw: str | None, default: bool = False) -> bool:
@@ -81,6 +101,18 @@ def load_settings() -> Settings:
         minimum=500,
         maximum=MAX_DIFF_CHARS_HARD_LIMIT,
     )
+    max_service_calls = _as_int(
+        os.getenv("MAX_SERVICE_CALLS"),
+        default=4,
+        minimum=1,
+        maximum=MAX_SERVICE_CALLS_HARD_LIMIT,
+    )
+    max_state_context_entities = _as_int(
+        os.getenv("MAX_STATE_CONTEXT_ENTITIES"),
+        default=80,
+        minimum=10,
+        maximum=500,
+    )
     return Settings(
         auth_token=os.getenv("AUTH_TOKEN", "").strip(),
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
@@ -93,4 +125,11 @@ def load_settings() -> Settings:
         forbidden_tokens=_as_csv(os.getenv("FORBIDDEN_TOKENS"), default=DEFAULT_FORBIDDEN_TOKENS),
         max_apply_operations=max_apply_operations,
         max_diff_chars=max_diff_chars,
+        allowed_service_domains=_as_csv(
+            os.getenv("ALLOWED_SERVICE_DOMAINS"),
+            default=DEFAULT_ALLOWED_SERVICE_DOMAINS,
+        ),
+        max_service_calls=max_service_calls,
+        include_state_context=_as_bool(os.getenv("INCLUDE_STATE_CONTEXT"), default=True),
+        max_state_context_entities=max_state_context_entities,
     )

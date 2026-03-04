@@ -35,7 +35,7 @@
       }
 
       .layout {
-        max-width: 1240px;
+        max-width: 1260px;
         margin: 0 auto;
         display: grid;
         gap: 16px;
@@ -71,18 +71,6 @@
         font-size: 0.9rem;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: 1.1fr 0.9fr;
-        gap: 16px;
-      }
-
-      @media (max-width: 980px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
       .panel {
         border-radius: 18px;
         background: var(--surface);
@@ -96,6 +84,21 @@
         text-transform: uppercase;
         font-size: 1rem;
         letter-spacing: 0.08em;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      @media (max-width: 980px) {
+        .grid.two {
+          grid-template-columns: 1fr;
+        }
       }
 
       label {
@@ -121,14 +124,31 @@
       }
 
       textarea {
-        min-height: 120px;
+        min-height: 90px;
         resize: vertical;
       }
 
-      .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .check-row label {
+        margin: 0;
+        text-transform: none;
+        letter-spacing: 0.01em;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .actions {
+        display: flex;
         gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 12px;
       }
 
       button {
@@ -148,30 +168,39 @@
         opacity: 0.6;
       }
 
-      .op {
+      .small {
+        font-size: 0.86rem;
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .chat-log {
         border: 1px solid #6f8a93;
+        background: #f9f9f2;
         border-radius: 12px;
-        background: var(--surface-soft);
         padding: 10px;
-        margin-top: 10px;
+        min-height: 180px;
+        max-height: 360px;
+        overflow: auto;
       }
 
-      .op-head {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
+      .bubble {
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
       }
 
-      .op-path {
-        font-weight: 700;
+      .bubble.user {
+        background: #dbeef8;
       }
 
-      .op-reason {
-        font-size: 0.92rem;
+      .bubble.assistant {
+        background: #e8efe0;
       }
 
-      pre {
+      .code {
         margin: 8px 0 0;
         border-radius: 10px;
         border: 1px solid #415960;
@@ -183,155 +212,246 @@
         font-size: 0.82rem;
       }
 
-      .small {
-        font-size: 0.86rem;
-      }
-
-      .ok {
-        color: var(--ok);
-      }
-
-      .warn {
-        color: var(--warn);
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
+      .op {
+        border: 1px solid #6f8a93;
+        border-radius: 12px;
+        background: var(--surface-soft);
+        padding: 10px;
         margin-top: 10px;
+      }
+
+      .op-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
       }
     </style>
   </head>
   <body>
     <main class="layout">
       <section class="hero">
-        <h1>Codex Assistant Panel</h1>
-        <p>Plan changes, review diffs, then apply only with explicit approval.</p>
+        <h1>Codex Assistant</h1>
+        <p>General Home Assistant chat with guarded execution, plus advanced YAML planning.</p>
         <div id="status" class="status-pill">Checking health...</div>
       </section>
 
-      <section class="grid">
+      <section class="panel">
+        <h2>Session Guardrails</h2>
+        <label for="token">Bearer Token</label>
+        <input id="token" type="password" autocomplete="off" placeholder="Set auth_token in add-on options" />
+
+        <div class="grid two">
+          <div>
+            <label for="approval">Approval Phrase</label>
+            <input id="approval" type="text" placeholder="APPLY" />
+          </div>
+          <div>
+            <div class="check-row">
+              <input id="dryRun" type="checkbox" checked />
+              <label for="dryRun">Use dry-run (recommended until validated)</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid two">
         <section class="panel">
-          <h2>Plan Request</h2>
-          <label for="token">Bearer Token</label>
-          <input id="token" type="password" autocomplete="off" placeholder="Set auth_token in add-on options" />
+          <h2>Chat Assistant</h2>
+          <label for="chatMessage">Message</label>
+          <textarea id="chatMessage" placeholder="Example: Turn on the kitchen lights and create an automation to turn them off at 11 PM."></textarea>
 
-          <label for="goal">Goal</label>
-          <textarea id="goal" placeholder="Example: Create automation to notify when front door opens after sunset"></textarea>
-
-          <label for="files">Target files (one per line)</label>
-          <textarea id="files">automations.yaml
+          <label for="chatFiles">Optional file context (one per line)</label>
+          <textarea id="chatFiles">automations.yaml
 scripts.yaml
 scenes.yaml
 ui-lovelace.yaml</textarea>
 
-          <div class="row">
+          <label for="chatEntities">Optional entity IDs (comma-separated)</label>
+          <input id="chatEntities" type="text" placeholder="light.kitchen, climate.living_room" />
+
+          <div class="grid two">
             <div>
-              <label for="maxOps">Max operations</label>
-              <input id="maxOps" type="number" min="1" max="10" value="5" />
+              <label for="chatMaxOps">Max file operations</label>
+              <input id="chatMaxOps" type="number" min="1" max="10" value="3" />
             </div>
             <div>
-              <label for="planDryRun">Apply in dry-run</label>
-              <input id="planDryRun" type="checkbox" checked />
+              <label for="chatMaxService">Max service calls</label>
+              <input id="chatMaxService" type="number" min="1" max="10" value="3" />
             </div>
           </div>
 
+          <div class="check-row">
+            <input id="chatIncludeState" type="checkbox" checked />
+            <label for="chatIncludeState">Include Home Assistant state context</label>
+          </div>
+          <div class="check-row">
+            <input id="chatExecute" type="checkbox" />
+            <label for="chatExecute">Execute proposed actions now</label>
+          </div>
+
           <div class="actions">
-            <button id="planBtn" type="button">Generate Plan</button>
-            <span class="small">Policy checks run before output appears.</span>
+            <button id="chatSendBtn" type="button">Send Chat</button>
+            <button id="chatClearBtn" type="button">Clear Chat</button>
           </div>
         </section>
 
         <section class="panel">
-          <h2>Apply</h2>
-          <label for="approval">Approval phrase</label>
-          <input id="approval" type="text" placeholder="APPLY" />
-          <div class="small">Required when manual approval is enabled.</div>
-
-          <div class="actions">
-            <button id="applyBtn" type="button">Apply Selected</button>
-            <span id="selection" class="small">0 operations selected</span>
-          </div>
-
-          <label for="console">Result</label>
-          <pre id="console">No actions yet.</pre>
+          <h2>Conversation</h2>
+          <div id="chatLog" class="chat-log"></div>
+          <label for="chatResult">Latest response payload</label>
+          <pre id="chatResult" class="code">No chat requests yet.</pre>
         </section>
       </section>
 
       <section class="panel">
-        <h2>Operations</h2>
+        <h2>Chat Action Preview</h2>
+        <div id="chatActions" class="small">No chat actions yet.</div>
+      </section>
+
+      <section class="grid two">
+        <section class="panel">
+          <h2>File Planner (Advanced)</h2>
+          <label for="planGoal">Goal</label>
+          <textarea id="planGoal" placeholder="Example: Create a package with porch light automation and notification script."></textarea>
+
+          <label for="planFiles">Target files (one per line)</label>
+          <textarea id="planFiles">automations.yaml
+scripts.yaml
+scenes.yaml
+ui-lovelace.yaml</textarea>
+
+          <label for="planMaxOps">Max operations</label>
+          <input id="planMaxOps" type="number" min="1" max="10" value="5" />
+
+          <div class="actions">
+            <button id="planBtn" type="button">Generate Plan</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Apply Plan Operations</h2>
+          <div class="actions">
+            <button id="applyBtn" type="button">Apply Selected</button>
+            <span id="selection" class="small">0 operations selected</span>
+          </div>
+          <label for="planResult">Result</label>
+          <pre id="planResult" class="code">No plan requests yet.</pre>
+        </section>
+      </section>
+
+      <section class="panel">
+        <h2>Planned File Operations</h2>
         <div id="ops" class="small">No plan generated.</div>
       </section>
     </main>
 
     <script>
       const tokenInput = document.getElementById("token");
-      const goalInput = document.getElementById("goal");
-      const filesInput = document.getElementById("files");
-      const maxOpsInput = document.getElementById("maxOps");
-      const planDryRunInput = document.getElementById("planDryRun");
       const approvalInput = document.getElementById("approval");
+      const dryRunInput = document.getElementById("dryRun");
       const statusNode = document.getElementById("status");
-      const opsNode = document.getElementById("ops");
-      const consoleNode = document.getElementById("console");
-      const selectionNode = document.getElementById("selection");
+
+      const chatMessageInput = document.getElementById("chatMessage");
+      const chatFilesInput = document.getElementById("chatFiles");
+      const chatEntitiesInput = document.getElementById("chatEntities");
+      const chatMaxOpsInput = document.getElementById("chatMaxOps");
+      const chatMaxServiceInput = document.getElementById("chatMaxService");
+      const chatIncludeStateInput = document.getElementById("chatIncludeState");
+      const chatExecuteInput = document.getElementById("chatExecute");
+      const chatSendBtn = document.getElementById("chatSendBtn");
+      const chatClearBtn = document.getElementById("chatClearBtn");
+      const chatLogNode = document.getElementById("chatLog");
+      const chatResultNode = document.getElementById("chatResult");
+      const chatActionsNode = document.getElementById("chatActions");
+
+      const planGoalInput = document.getElementById("planGoal");
+      const planFilesInput = document.getElementById("planFiles");
+      const planMaxOpsInput = document.getElementById("planMaxOps");
       const planBtn = document.getElementById("planBtn");
       const applyBtn = document.getElementById("applyBtn");
+      const opsNode = document.getElementById("ops");
+      const planResultNode = document.getElementById("planResult");
+      const selectionNode = document.getElementById("selection");
 
       const TOKEN_KEY = "codex_assistant_token";
+      const APPROVAL_KEY = "codex_assistant_approval";
+      const DRY_RUN_KEY = "codex_assistant_dry_run";
+
       tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
-      tokenInput.addEventListener("input", () => {
-        localStorage.setItem(TOKEN_KEY, tokenInput.value);
-      });
+      approvalInput.value = localStorage.getItem(APPROVAL_KEY) || "";
+      dryRunInput.checked = (localStorage.getItem(DRY_RUN_KEY) || "true") === "true";
 
-      let operations = [];
+      tokenInput.addEventListener("input", () => localStorage.setItem(TOKEN_KEY, tokenInput.value));
+      approvalInput.addEventListener("input", () => localStorage.setItem(APPROVAL_KEY, approvalInput.value));
+      dryRunInput.addEventListener("change", () => localStorage.setItem(DRY_RUN_KEY, String(dryRunInput.checked)));
 
-      function updateConsole(payload, isError) {
-        const pretty = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
-        consoleNode.textContent = pretty;
-        consoleNode.className = isError ? "warn" : "";
-      }
+      let planOperations = [];
+      let chatHistory = [];
 
       function authHeaders() {
         const token = tokenInput.value.trim();
         return token ? { Authorization: `Bearer ${token}` } : {};
       }
 
-      function checkedOps() {
+      function toPretty(payload) {
+        return typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+      }
+
+      function setResult(node, payload, isError) {
+        node.textContent = toPretty(payload);
+        node.classList.toggle("warn", Boolean(isError));
+      }
+
+      function parseLines(text) {
+        return text.split("\n").map((line) => line.trim()).filter(Boolean);
+      }
+
+      function parseComma(text) {
+        return text.split(",").map((line) => line.trim()).filter(Boolean);
+      }
+
+      function appendBubble(role, text) {
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${role}`;
+        bubble.textContent = `${role === "user" ? "You" : "Codex"}: ${text}`;
+        chatLogNode.appendChild(bubble);
+        chatLogNode.scrollTop = chatLogNode.scrollHeight;
+      }
+
+      function checkedPlanOps() {
         const checked = [];
         document.querySelectorAll('input[name="operation"]:checked').forEach((node) => {
           const idx = Number(node.value);
-          if (Number.isInteger(idx) && operations[idx]) {
-            checked.push(operations[idx]);
+          if (Number.isInteger(idx) && planOperations[idx]) {
+            checked.push(planOperations[idx]);
           }
         });
         return checked;
       }
 
       function updateSelection() {
-        const count = checkedOps().length;
-        selectionNode.textContent = `${count} operations selected`;
+        selectionNode.textContent = `${checkedPlanOps().length} operations selected`;
       }
 
-      function renderOperations(list) {
+      function renderPlanOperations(list) {
         if (!list.length) {
           opsNode.textContent = "No valid operations returned.";
           updateSelection();
           return;
         }
+
         opsNode.innerHTML = "";
         list.forEach((op, idx) => {
           const item = document.createElement("div");
           item.className = "op";
           item.innerHTML = `
-            <div class="op-head">
+            <div class="op-header">
               <input type="checkbox" name="operation" value="${idx}" checked />
-              <span class="op-path">${op.path}</span>
+              <strong>${op.path}</strong>
             </div>
-            <div class="op-reason">${op.reason || "No reason provided."}</div>
-            <pre>${op.diff || "No diff available."}</pre>
+            <div>${op.reason || "No reason provided."}</div>
+            <pre class="code">${op.diff || "No diff available."}</pre>
           `;
           opsNode.appendChild(item);
         });
@@ -341,6 +461,42 @@ ui-lovelace.yaml</textarea>
         updateSelection();
       }
 
+      function renderChatActions(data) {
+        const fileOps = Array.isArray(data.file_operations) ? data.file_operations : [];
+        const serviceCalls = Array.isArray(data.service_calls) ? data.service_calls : [];
+        if (!fileOps.length && !serviceCalls.length) {
+          chatActionsNode.textContent = "No file operations or service calls proposed.";
+          return;
+        }
+
+        const chunks = [];
+        if (serviceCalls.length) {
+          chunks.push("<h3>Service Calls</h3>");
+          serviceCalls.forEach((call) => {
+            chunks.push(`
+              <div class="op">
+                <div><strong>${call.domain}.${call.service}</strong></div>
+                <div>${call.reason || "No reason provided."}</div>
+                <pre class="code">${toPretty(call.data || {})}</pre>
+              </div>
+            `);
+          });
+        }
+        if (fileOps.length) {
+          chunks.push("<h3>File Operations</h3>");
+          fileOps.forEach((op) => {
+            chunks.push(`
+              <div class="op">
+                <div><strong>${op.path}</strong></div>
+                <div>${op.reason || "No reason provided."}</div>
+                <pre class="code">${op.diff || "No diff available."}</pre>
+              </div>
+            `);
+          });
+        }
+        chatActionsNode.innerHTML = chunks.join("");
+      }
+
       async function fetchHealth() {
         try {
           const response = await fetch("/health");
@@ -348,64 +504,133 @@ ui-lovelace.yaml</textarea>
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
-          const label = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | max_ops=${data.max_apply_operations}`;
-          statusNode.textContent = label;
+          statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | service_domains=${(data.allowed_service_domains || []).join(",")}`;
         } catch (error) {
           statusNode.textContent = `Health check failed: ${error.message}`;
           statusNode.classList.add("warn");
         }
       }
 
-      async function generatePlan() {
-        const goal = goalInput.value.trim();
-        if (!goal) {
-          updateConsole("Goal is required.", true);
+      async function sendChat() {
+        const message = chatMessageInput.value.trim();
+        if (!message) {
+          setResult(chatResultNode, "Message is required.", true);
           return;
         }
-        const files = filesInput.value
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
-        const max_operations = Number(maxOpsInput.value) || 5;
+        appendBubble("user", message);
+        chatSendBtn.disabled = true;
+        setResult(chatResultNode, "Sending chat request...", false);
 
-        planBtn.disabled = true;
-        updateConsole("Generating plan...", false);
         try {
-          const response = await fetch("/ai/plan", {
+          const payload = {
+            message,
+            history: chatHistory,
+            files: parseLines(chatFilesInput.value),
+            include_state_context: chatIncludeStateInput.checked,
+            entity_ids: parseComma(chatEntitiesInput.value),
+            max_operations: Number(chatMaxOpsInput.value) || 3,
+            max_service_calls: Number(chatMaxServiceInput.value) || 3,
+            execute: chatExecuteInput.checked,
+            backup: true,
+            dry_run: dryRunInput.checked,
+            approval_phrase: approvalInput.value.trim() || null,
+          };
+
+          const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders() },
-            body: JSON.stringify({ goal, files, max_operations }),
+            body: JSON.stringify(payload),
           });
           const data = await response.json();
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
-          operations = Array.isArray(data.operations) ? data.operations : [];
-          renderOperations(operations);
-          updateConsole({ model: data.model, max_operations: data.max_operations, operation_count: operations.length }, false);
+
+          const assistantText = data.assistant_message || "No assistant message.";
+          appendBubble("assistant", assistantText);
+          chatHistory.push({ role: "user", content: message });
+          chatHistory.push({ role: "assistant", content: assistantText });
+          chatHistory = chatHistory.slice(-12);
+
+          renderChatActions(data);
+          setResult(chatResultNode, data, false);
         } catch (error) {
-          updateConsole(error.message, true);
+          setResult(chatResultNode, error.message, true);
+        } finally {
+          chatSendBtn.disabled = false;
+          chatMessageInput.value = "";
+        }
+      }
+
+      function clearChat() {
+        chatHistory = [];
+        chatLogNode.innerHTML = "";
+        chatActionsNode.textContent = "No chat actions yet.";
+        setResult(chatResultNode, "No chat requests yet.", false);
+      }
+
+      async function generatePlan() {
+        const goal = planGoalInput.value.trim();
+        if (!goal) {
+          setResult(planResultNode, "Goal is required.", true);
+          return;
+        }
+        planBtn.disabled = true;
+        setResult(planResultNode, "Generating plan...", false);
+
+        try {
+          const response = await fetch("/ai/plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({
+              goal,
+              files: parseLines(planFilesInput.value),
+              max_operations: Number(planMaxOpsInput.value) || 5,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+          planOperations = Array.isArray(data.operations) ? data.operations : [];
+          renderPlanOperations(planOperations);
+          setResult(
+            planResultNode,
+            {
+              model: data.model,
+              max_operations: data.max_operations,
+              operation_count: planOperations.length,
+            },
+            false
+          );
+        } catch (error) {
+          setResult(planResultNode, error.message, true);
         } finally {
           planBtn.disabled = false;
         }
       }
 
       async function applySelected() {
-        const selected = checkedOps();
+        const selected = checkedPlanOps();
         if (!selected.length) {
-          updateConsole("Select at least one operation.", true);
+          setResult(planResultNode, "Select at least one operation.", true);
           return;
         }
+
         applyBtn.disabled = true;
-        updateConsole("Applying operations...", false);
+        setResult(planResultNode, "Applying operations...", false);
         try {
           const response = await fetch("/operations/apply", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders() },
             body: JSON.stringify({
-              operations: selected.map((op) => ({ path: op.path, content: op.content, reason: op.reason })),
+              operations: selected.map((op) => ({
+                path: op.path,
+                content: op.content,
+                reason: op.reason,
+              })),
               backup: true,
-              dry_run: planDryRunInput.checked,
+              dry_run: dryRunInput.checked,
               approval_phrase: approvalInput.value.trim() || null,
             }),
           });
@@ -413,14 +638,16 @@ ui-lovelace.yaml</textarea>
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
-          updateConsole(data, false);
+          setResult(planResultNode, data, false);
         } catch (error) {
-          updateConsole(error.message, true);
+          setResult(planResultNode, error.message, true);
         } finally {
           applyBtn.disabled = false;
         }
       }
 
+      chatSendBtn.addEventListener("click", sendChat);
+      chatClearBtn.addEventListener("click", clearChat);
       planBtn.addEventListener("click", generatePlan);
       applyBtn.addEventListener("click", applySelected);
       fetchHealth();
