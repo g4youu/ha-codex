@@ -91,7 +91,10 @@ Inside the panel, you now get quick links to:
 - OpenAI API Platform
 - OpenAI API Keys page
 
-After signing in, create an API key and paste it into the panel's **OpenAI API Key (optional session override)** field.
+Important: these links do not auto-redirect back into Home Assistant.
+After signing in, return to the Codex Assistant panel manually, create/paste the key into
+**OpenAI API Key (optional session override)**, then click **Verify Key**.
+
 This key is sent per request and is not persisted by the backend.
 
 ## API flow (recommended)

@@ -20,9 +20,10 @@ from .models import (
     ReadFileRequest,
     ServiceCallOperation,
     ValidateFileRequest,
+    VerifyOpenAIKeyRequest,
     WriteFileRequest,
 )
-from .openai_client import generate_chat_result, generate_plan
+from .openai_client import generate_chat_result, generate_plan, verify_openai_api_key
 from .policy import enforce_content_policy, enforce_goal_policy
 from .security import resolve_allowed_path
 from .storage import (
@@ -46,7 +47,7 @@ SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.2.1",
+    version="0.2.2",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
@@ -267,6 +268,21 @@ def health() -> dict[str, Any]:
         "max_service_calls": SETTINGS.max_service_calls,
         "include_state_context": SETTINGS.include_state_context,
     }
+
+
+@app.post("/auth/openai/verify", dependencies=[Depends(require_auth)])
+def verify_openai_key(request: VerifyOpenAIKeyRequest) -> dict[str, Any]:
+    key = _effective_openai_api_key(request.openai_api_key)
+    source = "request" if request.openai_api_key and request.openai_api_key.strip() else "addon_config"
+    try:
+        result = verify_openai_api_key(api_key=key)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    append_audit(action="verify_openai_key", payload={"source": source, "valid": True})
+    return {"valid": True, "source": source, **result}
 
 
 @app.post("/files/read", dependencies=[Depends(require_auth)])

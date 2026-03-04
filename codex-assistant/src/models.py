@@ -105,3 +105,10 @@ class ChatRequest(BaseModel):
     backup: bool = Field(default=True)
     dry_run: bool | None = Field(default=None)
     approval_phrase: str | None = Field(default=None)
+
+
+class VerifyOpenAIKeyRequest(BaseModel):
+    openai_api_key: str | None = Field(
+        default=None,
+        description="Optional OpenAI API key override to verify.",
+    )
