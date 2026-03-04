@@ -59,10 +59,6 @@ class PlanRequest(BaseModel):
         description="Relevant target files to include as context.",
     )
     max_operations: int = Field(default=5, ge=1, le=10)
-    openai_api_key: str | None = Field(
-        default=None,
-        description="Optional per-request OpenAI API key override.",
-    )
 
 
 class ServiceCallOperation(BaseModel):
@@ -94,10 +90,6 @@ class ChatRequest(BaseModel):
     )
     max_operations: int = Field(default=3, ge=1, le=10)
     max_service_calls: int = Field(default=3, ge=1, le=10)
-    openai_api_key: str | None = Field(
-        default=None,
-        description="Optional per-request OpenAI API key override.",
-    )
     execute: bool = Field(
         default=False,
         description="Execute proposed actions immediately (subject to policy and dry-run).",
@@ -105,10 +97,3 @@ class ChatRequest(BaseModel):
     backup: bool = Field(default=True)
     dry_run: bool | None = Field(default=None)
     approval_phrase: str | None = Field(default=None)
-
-
-class VerifyOpenAIKeyRequest(BaseModel):
-    openai_api_key: str | None = Field(
-        default=None,
-        description="Optional OpenAI API key override to verify.",
-    )

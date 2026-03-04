@@ -151,23 +151,6 @@
         margin-top: 12px;
       }
 
-      .inline-status {
-        margin-top: 8px;
-        font-size: 0.9rem;
-      }
-
-      .links {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 8px;
-      }
-
-      .links a {
-        color: #0b5a70;
-        font-weight: 600;
-      }
-
       button {
         border: 0;
         border-radius: 12px;
@@ -257,22 +240,7 @@
         <h2>Session Guardrails</h2>
         <label for="token">Bearer Token</label>
         <input id="token" type="password" autocomplete="off" placeholder="Set auth_token in add-on options" />
-
-        <label for="openaiKey">OpenAI API Key (optional session override)</label>
-        <input id="openaiKey" type="password" autocomplete="off" placeholder="sk-... (use this if add-on key is not configured)" />
-        <div class="small">
-          Easy login path: sign in on OpenAI, create an API key, paste it here for this browser session.
-        </div>
-        <div class="links small">
-          <a href="https://chatgpt.com/auth/login" target="_blank" rel="noopener noreferrer">Open ChatGPT Login</a>
-          <a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer">Open API Platform</a>
-          <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Open API Keys Page</a>
-        </div>
-        <div class="actions">
-          <button id="verifyKeyBtn" type="button">Verify Key</button>
-          <span class="small">After creating a key, paste it above, then verify.</span>
-        </div>
-        <div id="verifyKeyStatus" class="inline-status small">Verification not run.</div>
+        <div class="small">OpenAI API key must be configured in the add-on options page.</div>
 
         <div class="grid two">
           <div>
@@ -381,9 +349,6 @@ ui-lovelace.yaml</textarea>
 
     <script>
       const tokenInput = document.getElementById("token");
-      const openaiKeyInput = document.getElementById("openaiKey");
-      const verifyKeyBtn = document.getElementById("verifyKeyBtn");
-      const verifyKeyStatus = document.getElementById("verifyKeyStatus");
       const approvalInput = document.getElementById("approval");
       const dryRunInput = document.getElementById("dryRun");
       const statusNode = document.getElementById("status");
@@ -424,16 +389,6 @@ ui-lovelace.yaml</textarea>
 
       let planOperations = [];
       let chatHistory = [];
-
-      function sessionOpenAIKey() {
-        const key = openaiKeyInput.value.trim();
-        return key || null;
-      }
-
-      function setVerifyStatus(message, isError) {
-        verifyKeyStatus.textContent = message;
-        verifyKeyStatus.classList.toggle("warn", Boolean(isError));
-      }
 
       function authHeaders() {
         const token = tokenInput.value.trim();
@@ -550,33 +505,11 @@ ui-lovelace.yaml</textarea>
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
-          const keySource = data.openai_key_configured ? "addon-key" : "session-key needed";
-          statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | openai=${keySource} | service_domains=${(data.allowed_service_domains || []).join(",")}`;
+          const keyState = data.openai_key_configured ? "configured" : "missing";
+          statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | openai_key=${keyState} | service_domains=${(data.allowed_service_domains || []).join(",")}`;
         } catch (error) {
           statusNode.textContent = `Health check failed: ${error.message}`;
           statusNode.classList.add("warn");
-        }
-      }
-
-      async function verifyOpenAIKey() {
-        verifyKeyBtn.disabled = true;
-        setVerifyStatus("Verifying OpenAI key...", false);
-        try {
-          const response = await fetch("/auth/openai/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...authHeaders() },
-            body: JSON.stringify({ openai_api_key: sessionOpenAIKey() }),
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.detail || `HTTP ${response.status}`);
-          }
-          const sample = Array.isArray(data.sample_models) ? data.sample_models.join(", ") : "";
-          setVerifyStatus(`Key verified (source=${data.source}). Sample models: ${sample}`, false);
-        } catch (error) {
-          setVerifyStatus(`Verification failed: ${error.message}`, true);
-        } finally {
-          verifyKeyBtn.disabled = false;
         }
       }
 
@@ -599,7 +532,6 @@ ui-lovelace.yaml</textarea>
             entity_ids: parseComma(chatEntitiesInput.value),
             max_operations: Number(chatMaxOpsInput.value) || 3,
             max_service_calls: Number(chatMaxServiceInput.value) || 3,
-            openai_api_key: sessionOpenAIKey(),
             execute: chatExecuteInput.checked,
             backup: true,
             dry_run: dryRunInput.checked,
@@ -656,7 +588,6 @@ ui-lovelace.yaml</textarea>
               goal,
               files: parseLines(planFilesInput.value),
               max_operations: Number(planMaxOpsInput.value) || 5,
-              openai_api_key: sessionOpenAIKey(),
             }),
           });
           const data = await response.json();
@@ -719,7 +650,6 @@ ui-lovelace.yaml</textarea>
 
       chatSendBtn.addEventListener("click", sendChat);
       chatClearBtn.addEventListener("click", clearChat);
-      verifyKeyBtn.addEventListener("click", verifyOpenAIKey);
       planBtn.addEventListener("click", generatePlan);
       applyBtn.addEventListener("click", applySelected);
       fetchHealth();

@@ -80,22 +80,9 @@ export MAX_STATE_CONTEXT_ENTITIES="80"
 3. Add your repository URL.
 4. Install `Codex Assistant`.
 5. Configure `auth_token` (required for API access).
-6. Keep `dry_run` enabled until you trust your workflow.
-7. Open the add-on panel (Ingress), paste token, and start with chat in dry-run mode.
-
-### Easy OpenAI Login Option
-
-Inside the panel, you now get quick links to:
-
-- ChatGPT login
-- OpenAI API Platform
-- OpenAI API Keys page
-
-Important: these links do not auto-redirect back into Home Assistant.
-After signing in, return to the Codex Assistant panel manually, create/paste the key into
-**OpenAI API Key (optional session override)**, then click **Verify Key**.
-
-This key is sent per request and is not persisted by the backend.
+6. Configure `openai_api_key` in add-on options.
+7. Keep `dry_run` enabled until you trust your workflow.
+8. Open the add-on panel (Ingress), paste token, and start with chat in dry-run mode.
 
 ## API flow (recommended)
 
@@ -120,4 +107,4 @@ Core API endpoints:
 - For Lovelace in storage mode (`.storage`), keep writes manual or add dedicated safe handlers rather than broad file access.
 - For first production use, rotate `auth_token`, keep `dry_run=true`, and only disable it after validating output.
 - Keep dangerous domains (`homeassistant`, `hassio`) out of `allowed_service_domains` unless you intentionally accept that risk.
-- A full OAuth callback flow ("log in with ChatGPT and return token automatically") is not exposed for this custom add-on path, so API key copy/paste is used.
+- To actually run actions (for example `light.turn_on`), set `execute=true` from UI and disable dry-run.

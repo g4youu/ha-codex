@@ -170,25 +170,3 @@ def generate_chat_result(
     }
     data = _request_responses_api(api_key=api_key, body=body)
     return _parse_json_output(data)
-
-
-def verify_openai_api_key(*, api_key: str) -> dict[str, Any]:
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    with httpx.Client(timeout=20.0) as client:
-        response = client.get("https://api.openai.com/v1/models?limit=3", headers=headers)
-
-    if response.status_code == 401:
-        raise PermissionError("OpenAI API key is invalid or unauthorized.")
-    if response.status_code == 403:
-        raise PermissionError("OpenAI API key is forbidden for this endpoint.")
-    if response.status_code >= 400:
-        snippet = response.text[:300]
-        raise RuntimeError(f"OpenAI API verification failed ({response.status_code}): {snippet}")
-
-    payload = response.json()
-    data = payload.get("data")
-    if not isinstance(data, list):
-        raise RuntimeError("Unexpected response from OpenAI models endpoint.")
-
-    preview = [str(item.get("id")) for item in data[:3] if isinstance(item, dict) and item.get("id")]
-    return {"valid": True, "sample_models": preview}

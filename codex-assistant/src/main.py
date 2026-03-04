@@ -20,10 +20,9 @@ from .models import (
     ReadFileRequest,
     ServiceCallOperation,
     ValidateFileRequest,
-    VerifyOpenAIKeyRequest,
     WriteFileRequest,
 )
-from .openai_client import generate_chat_result, generate_plan, verify_openai_api_key
+from .openai_client import generate_chat_result, generate_plan
 from .policy import enforce_content_policy, enforce_goal_policy
 from .security import resolve_allowed_path
 from .storage import (
@@ -47,7 +46,7 @@ SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.2.2",
+    version="0.2.3",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
@@ -230,17 +229,12 @@ def _chat_state_context(request: ChatRequest) -> tuple[list[dict[str, Any]], str
         return [], f"State context unavailable: {exc}"
 
 
-def _effective_openai_api_key(request_key: str | None) -> str:
-    if request_key and request_key.strip():
-        return request_key.strip()
+def _configured_openai_api_key() -> str:
     if SETTINGS.openai_api_key:
         return SETTINGS.openai_api_key
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail=(
-            "openai_api_key is not configured in add-on options. "
-            "Provide openai_api_key in request body for one-off/session use."
-        ),
+        detail="openai_api_key is not configured in add-on options.",
     )
 
 
@@ -268,21 +262,6 @@ def health() -> dict[str, Any]:
         "max_service_calls": SETTINGS.max_service_calls,
         "include_state_context": SETTINGS.include_state_context,
     }
-
-
-@app.post("/auth/openai/verify", dependencies=[Depends(require_auth)])
-def verify_openai_key(request: VerifyOpenAIKeyRequest) -> dict[str, Any]:
-    key = _effective_openai_api_key(request.openai_api_key)
-    source = "request" if request.openai_api_key and request.openai_api_key.strip() else "addon_config"
-    try:
-        result = verify_openai_api_key(api_key=key)
-    except PermissionError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
-    append_audit(action="verify_openai_key", payload={"source": source, "valid": True})
-    return {"valid": True, "source": source, **result}
 
 
 @app.post("/files/read", dependencies=[Depends(require_auth)])
@@ -453,7 +432,7 @@ def apply_operations(request: ApplyOperationsRequest) -> dict[str, Any]:
 
 @app.post("/ai/plan", dependencies=[Depends(require_auth)])
 def ai_plan(request: PlanRequest) -> dict[str, Any]:
-    request_openai_key = _effective_openai_api_key(request.openai_api_key)
+    configured_openai_key = _configured_openai_api_key()
     _enforce_goal_policy_or_400(request.goal)
     requested_max_ops = min(request.max_operations, SETTINGS.max_apply_operations)
 
@@ -464,7 +443,7 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
 
     try:
         model_result = generate_plan(
-            api_key=request_openai_key,
+            api_key=configured_openai_key,
             model=SETTINGS.openai_model,
             goal=request.goal,
             file_context=file_context,
@@ -540,7 +519,7 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
 
 @app.post("/chat", dependencies=[Depends(require_auth)])
 def chat(request: ChatRequest) -> dict[str, Any]:
-    request_openai_key = _effective_openai_api_key(request.openai_api_key)
+    configured_openai_key = _configured_openai_api_key()
     message = request.message.strip()
     if not message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="message is required.")
@@ -556,7 +535,7 @@ def chat(request: ChatRequest) -> dict[str, Any]:
 
     try:
         model_result = generate_chat_result(
-            api_key=request_openai_key,
+            api_key=configured_openai_key,
             model=SETTINGS.openai_model,
             message=message,
             history=history,
