@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codex Assistant</title>
+    <style>
+      :root {
+        --bg-top: #08181b;
+        --bg-bottom: #122f36;
+        --surface: #f6f7ef;
+        --surface-soft: #e9ecdd;
+        --ink: #102024;
+        --accent: #e95f2c;
+        --accent-soft: #ff8a5f;
+        --line: #295059;
+        --ok: #2f8f4e;
+        --warn: #b84d2a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 10% 10%, #205a66 0%, transparent 40%),
+          radial-gradient(circle at 92% 18%, #9f3f1f 0%, transparent 32%),
+          linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+        padding: 20px;
+      }
+
+      .layout {
+        max-width: 1240px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+      }
+
+      .hero {
+        color: #f9fffb;
+        border: 1px solid #44717a;
+        border-radius: 18px;
+        padding: 18px 22px;
+        background: linear-gradient(120deg, rgb(14 41 47 / 0.86), rgb(24 70 78 / 0.75));
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .hero p {
+        margin: 8px 0 0;
+        color: #dcf1ec;
+      }
+
+      .status-pill {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid #8ac8b9;
+        background: rgb(7 31 36 / 0.45);
+        font-size: 0.9rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 16px;
+      }
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        border-radius: 18px;
+        background: var(--surface);
+        border: 2px solid var(--line);
+        box-shadow: 8px 8px 0 rgb(10 40 47 / 0.25);
+        padding: 16px;
+      }
+
+      .panel h2 {
+        margin: 0 0 12px;
+        text-transform: uppercase;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+      }
+
+      label {
+        display: block;
+        margin: 9px 0 6px;
+        font-size: 0.83rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="number"],
+      textarea {
+        width: 100%;
+        border: 1px solid #5c7781;
+        border-radius: 12px;
+        padding: 10px 11px;
+        background: #fffef9;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        background: linear-gradient(180deg, var(--accent-soft), var(--accent));
+        color: #fffefb;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .op {
+        border: 1px solid #6f8a93;
+        border-radius: 12px;
+        background: var(--surface-soft);
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .op-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .op-path {
+        font-weight: 700;
+      }
+
+      .op-reason {
+        font-size: 0.92rem;
+      }
+
+      pre {
+        margin: 8px 0 0;
+        border-radius: 10px;
+        border: 1px solid #415960;
+        background: #12232a;
+        color: #e2fbec;
+        padding: 10px;
+        overflow: auto;
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        font-size: 0.82rem;
+      }
+
+      .small {
+        font-size: 0.86rem;
+      }
+
+      .ok {
+        color: var(--ok);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <section class="hero">
+        <h1>Codex Assistant Panel</h1>
+        <p>Plan changes, review diffs, then apply only with explicit approval.</p>
+        <div id="status" class="status-pill">Checking health...</div>
+      </section>
+
+      <section class="grid">
+        <section class="panel">
+          <h2>Plan Request</h2>
+          <label for="token">Bearer Token</label>
+          <input id="token" type="password" autocomplete="off" placeholder="Set auth_token in add-on options" />
+
+          <label for="goal">Goal</label>
+          <textarea id="goal" placeholder="Example: Create automation to notify when front door opens after sunset"></textarea>
+
+          <label for="files">Target files (one per line)</label>
+          <textarea id="files">automations.yaml
+scripts.yaml
+scenes.yaml
+ui-lovelace.yaml</textarea>
+
+          <div class="row">
+            <div>
+              <label for="maxOps">Max operations</label>
+              <input id="maxOps" type="number" min="1" max="10" value="5" />
+            </div>
+            <div>
+              <label for="planDryRun">Apply in dry-run</label>
+              <input id="planDryRun" type="checkbox" checked />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="planBtn" type="button">Generate Plan</button>
+            <span class="small">Policy checks run before output appears.</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Apply</h2>
+          <label for="approval">Approval phrase</label>
+          <input id="approval" type="text" placeholder="APPLY" />
+          <div class="small">Required when manual approval is enabled.</div>
+
+          <div class="actions">
+            <button id="applyBtn" type="button">Apply Selected</button>
+            <span id="selection" class="small">0 operations selected</span>
+          </div>
+
+          <label for="console">Result</label>
+          <pre id="console">No actions yet.</pre>
+        </section>
+      </section>
+
+      <section class="panel">
+        <h2>Operations</h2>
+        <div id="ops" class="small">No plan generated.</div>
+      </section>
+    </main>
+
+    <script>
+      const tokenInput = document.getElementById("token");
+      const goalInput = document.getElementById("goal");
+      const filesInput = document.getElementById("files");
+      const maxOpsInput = document.getElementById("maxOps");
+      const planDryRunInput = document.getElementById("planDryRun");
+      const approvalInput = document.getElementById("approval");
+      const statusNode = document.getElementById("status");
+      const opsNode = document.getElementById("ops");
+      const consoleNode = document.getElementById("console");
+      const selectionNode = document.getElementById("selection");
+      const planBtn = document.getElementById("planBtn");
+      const applyBtn = document.getElementById("applyBtn");
+
+      const TOKEN_KEY = "codex_assistant_token";
+      tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
+      tokenInput.addEventListener("input", () => {
+        localStorage.setItem(TOKEN_KEY, tokenInput.value);
+      });
+
+      let operations = [];
+
+      function updateConsole(payload, isError) {
+        const pretty = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+        consoleNode.textContent = pretty;
+        consoleNode.className = isError ? "warn" : "";
+      }
+
+      function authHeaders() {
+        const token = tokenInput.value.trim();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      }
+
+      function checkedOps() {
+        const checked = [];
+        document.querySelectorAll('input[name="operation"]:checked').forEach((node) => {
+          const idx = Number(node.value);
+          if (Number.isInteger(idx) && operations[idx]) {
+            checked.push(operations[idx]);
+          }
+        });
+        return checked;
+      }
+
+      function updateSelection() {
+        const count = checkedOps().length;
+        selectionNode.textContent = `${count} operations selected`;
+      }
+
+      function renderOperations(list) {
+        if (!list.length) {
+          opsNode.textContent = "No valid operations returned.";
+          updateSelection();
+          return;
+        }
+        opsNode.innerHTML = "";
+        list.forEach((op, idx) => {
+          const item = document.createElement("div");
+          item.className = "op";
+          item.innerHTML = `
+            <div class="op-head">
+              <input type="checkbox" name="operation" value="${idx}" checked />
+              <span class="op-path">${op.path}</span>
+            </div>
+            <div class="op-reason">${op.reason || "No reason provided."}</div>
+            <pre>${op.diff || "No diff available."}</pre>
+          `;
+          opsNode.appendChild(item);
+        });
+        document.querySelectorAll('input[name="operation"]').forEach((node) => {
+          node.addEventListener("change", updateSelection);
+        });
+        updateSelection();
+      }
+
+      async function fetchHealth() {
+        try {
+          const response = await fetch("/health");
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+          const label = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | max_ops=${data.max_apply_operations}`;
+          statusNode.textContent = label;
+        } catch (error) {
+          statusNode.textContent = `Health check failed: ${error.message}`;
+          statusNode.classList.add("warn");
+        }
+      }
+
+      async function generatePlan() {
+        const goal = goalInput.value.trim();
+        if (!goal) {
+          updateConsole("Goal is required.", true);
+          return;
+        }
+        const files = filesInput.value
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const max_operations = Number(maxOpsInput.value) || 5;
+
+        planBtn.disabled = true;
+        updateConsole("Generating plan...", false);
+        try {
+          const response = await fetch("/ai/plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({ goal, files, max_operations }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+          operations = Array.isArray(data.operations) ? data.operations : [];
+          renderOperations(operations);
+          updateConsole({ model: data.model, max_operations: data.max_operations, operation_count: operations.length }, false);
+        } catch (error) {
+          updateConsole(error.message, true);
+        } finally {
+          planBtn.disabled = false;
+        }
+      }
+
+      async function applySelected() {
+        const selected = checkedOps();
+        if (!selected.length) {
+          updateConsole("Select at least one operation.", true);
+          return;
+        }
+        applyBtn.disabled = true;
+        updateConsole("Applying operations...", false);
+        try {
+          const response = await fetch("/operations/apply", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({
+              operations: selected.map((op) => ({ path: op.path, content: op.content, reason: op.reason })),
+              backup: true,
+              dry_run: planDryRunInput.checked,
+              approval_phrase: approvalInput.value.trim() || null,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+          updateConsole(data, false);
+        } catch (error) {
+          updateConsole(error.message, true);
+        } finally {
+          applyBtn.disabled = false;
+        }
+      }
+
+      planBtn.addEventListener("click", generatePlan);
+      applyBtn.addEventListener("click", applySelected);
+      fetchHealth();
+    </script>
+  </body>
+</html>
