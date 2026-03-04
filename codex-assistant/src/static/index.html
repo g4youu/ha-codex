@@ -384,6 +384,10 @@ ui-lovelace.yaml</textarea>
       let planOperations = [];
       let chatHistory = [];
 
+      function apiPath(path) {
+        return `./${path.replace(/^\/+/, "")}`;
+      }
+
       function toPretty(payload) {
         return typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
       }
@@ -501,13 +505,14 @@ ui-lovelace.yaml</textarea>
 
       async function fetchHealth() {
         try {
-          const response = await fetch("/health");
+          const response = await fetch(apiPath("health"));
           const data = await readApiPayload(response);
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
           const keyState = data.openai_key_configured ? "configured" : "missing";
           statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | openai_key=${keyState} | service_domains=${(data.allowed_service_domains || []).join(",")}`;
+          statusNode.classList.remove("warn");
         } catch (error) {
           statusNode.textContent = `Health check failed: ${error.message}`;
           statusNode.classList.add("warn");
@@ -539,7 +544,7 @@ ui-lovelace.yaml</textarea>
             approval_phrase: approvalInput.value.trim() || null,
           };
 
-          const response = await fetch("/chat", {
+          const response = await fetch(apiPath("chat"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -582,7 +587,7 @@ ui-lovelace.yaml</textarea>
         setResult(planResultNode, "Generating plan...", false);
 
         try {
-          const response = await fetch("/ai/plan", {
+          const response = await fetch(apiPath("ai/plan"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -623,7 +628,7 @@ ui-lovelace.yaml</textarea>
         applyBtn.disabled = true;
         setResult(planResultNode, "Applying operations...", false);
         try {
-          const response = await fetch("/operations/apply", {
+          const response = await fetch(apiPath("operations/apply"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
