@@ -1,6 +1,6 @@
 # Codex Assistant Add-on for Home Assistant
 
-This project is a secure starter for a Home Assistant add-on that works as a general Home Assistant assistant.
+This project is still in development. It is a secure starter for a Home Assistant add-on that works as a general Home Assistant assistant.
 
 It can chat to:
 
@@ -42,6 +42,15 @@ It includes an ingress panel at `/` so you can run this flow directly in Home As
 - `codex-assistant/`: add-on bundle
 - `codex-assistant/src/`: FastAPI service
 
+## Home Assistant install (custom repository)
+
+1. In Home Assistant: `Settings -> Add-ons -> Add-on Store -> (...) -> Repositories`.
+2. Add this project repository URL.
+3. Install `Codex Assistant` and enable the sidebar panel.
+4. Configure `openai_api_key` in add-on configuration option.
+5. Keep `dry_run` enabled until you trust your workflow.
+6. Open the add-on sidebar panel (Ingress) and start with chat in dry-run mode.
+
 ## Local development
 
 From this workspace:
@@ -71,16 +80,6 @@ export MAX_SERVICE_CALLS="4"
 export INCLUDE_STATE_CONTEXT="true"
 export MAX_STATE_CONTEXT_ENTITIES="80"
 ```
-
-## Home Assistant install (custom repository)
-
-1. Push this project to a Git repo.
-2. In Home Assistant: `Settings -> Add-ons -> Add-on Store -> (...) -> Repositories`.
-3. Add your repository URL.
-4. Install `Codex Assistant`.
-5. Configure `openai_api_key` in add-on options.
-6. Keep `dry_run` enabled until you trust your workflow.
-7. Open the add-on panel (Ingress) and start with chat in dry-run mode.
 
 ## API flow (recommended)
 
