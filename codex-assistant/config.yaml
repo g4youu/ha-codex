@@ -1,6 +1,6 @@
 name: "Codex Assistant"
 description: "Secure AI-assisted Home Assistant chat and automation assistant"
-version: "0.2.0"
+version: "0.2.1"
 slug: "codex_assistant"
 url: "https://github.com/g4youu/ha-codex.git"
 arch:
