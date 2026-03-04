@@ -80,7 +80,22 @@ def _request_responses_api(*, api_key: str, body: dict[str, Any]) -> dict[str, A
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     with httpx.Client(timeout=60.0) as client:
         response = client.post("https://api.openai.com/v1/responses", headers=headers, json=body)
-        response.raise_for_status()
+        if response.is_error:
+            detail = response.text.strip()
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = None
+            if isinstance(payload, dict):
+                error = payload.get("error")
+                if isinstance(error, dict):
+                    message = str(error.get("message", "")).strip()
+                    code = str(error.get("code", "")).strip()
+                    param = str(error.get("param", "")).strip()
+                    parts = [part for part in (message, f"code={code}" if code else "", f"param={param}" if param else "") if part]
+                    if parts:
+                        detail = " | ".join(parts)
+            raise RuntimeError(f"OpenAI Responses API failed ({response.status_code}): {detail}")
         return response.json()
 
 
@@ -121,7 +136,6 @@ def generate_plan(
                 "content": [{"type": "input_text", "text": json.dumps(user_payload)}],
             },
         ],
-        "temperature": 0.2,
         "max_output_tokens": 3000,
     }
 
@@ -165,7 +179,6 @@ def generate_chat_result(
                 "content": [{"type": "input_text", "text": json.dumps(user_payload)}],
             },
         ],
-        "temperature": 0.2,
         "max_output_tokens": 3500,
     }
     data = _request_responses_api(api_key=api_key, body=body)
