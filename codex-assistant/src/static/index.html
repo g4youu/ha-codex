@@ -261,10 +261,8 @@
           <textarea id="chatMessage" placeholder="Example: Turn on the kitchen lights and create an automation to turn them off at 11 PM."></textarea>
 
           <label for="chatFiles">Optional file context (one per line)</label>
-          <textarea id="chatFiles">automations.yaml
-scripts.yaml
-scenes.yaml
-ui-lovelace.yaml</textarea>
+          <textarea id="chatFiles" placeholder="automations.yaml&#10;scripts.yaml"></textarea>
+          <div class="small">Leave empty for normal control chat. Add files only for YAML edit requests.</div>
 
           <label for="chatEntities">Optional entity IDs (comma-separated)</label>
           <input id="chatEntities" type="text" placeholder="light.kitchen, climate.living_room" />
@@ -315,10 +313,7 @@ ui-lovelace.yaml</textarea>
           <textarea id="planGoal" placeholder="Example: Create a package with porch light automation and notification script."></textarea>
 
           <label for="planFiles">Target files (one per line)</label>
-          <textarea id="planFiles">automations.yaml
-scripts.yaml
-scenes.yaml
-ui-lovelace.yaml</textarea>
+          <textarea id="planFiles" placeholder="automations.yaml&#10;scripts.yaml&#10;scenes.yaml&#10;ui-lovelace.yaml"></textarea>
 
           <label for="planMaxOps">Max operations</label>
           <input id="planMaxOps" type="number" min="1" max="10" value="5" />

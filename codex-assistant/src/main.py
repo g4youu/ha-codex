@@ -46,7 +46,7 @@ SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.2.5",
+    version="0.2.6",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
@@ -72,13 +72,24 @@ def _effective_dry_run(request_dry_run: bool | None) -> bool:
 def _read_for_ai_context(path: Path) -> str:
     if not path.exists():
         return ""
-    try:
+    size = path.stat().st_size
+    if size <= MAX_AI_FILE_CONTEXT_BYTES:
         return read_text(path, max_bytes=MAX_AI_FILE_CONTEXT_BYTES)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Context file too large for AI planning: {path.as_posix()} ({exc})",
-        ) from exc
+
+    with path.open("rb") as handle:
+        raw = handle.read(MAX_AI_FILE_CONTEXT_BYTES)
+    truncated = raw.decode("utf-8", errors="replace")
+    LOGGER.warning(
+        "Truncating context file for AI planning: %s (%s bytes > %s bytes)",
+        path.as_posix(),
+        size,
+        MAX_AI_FILE_CONTEXT_BYTES,
+    )
+    return (
+        f"{truncated}\n\n"
+        f"# [Context truncated: {path.as_posix()} is {size} bytes; "
+        f"sent first {MAX_AI_FILE_CONTEXT_BYTES} bytes.]"
+    )
 
 
 def _read_existing(path: Path) -> str:

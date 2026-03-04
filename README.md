@@ -30,7 +30,7 @@ It includes an ingress panel at `/` so you can run this flow directly in Home As
 - SHA-256 precondition checks to prevent blind overwrite
 - Automatic backups under `/config/.codex-backups/...`
 - JSONL audit log in `/data/audit.log`
-- Token-based API auth for non-health endpoints
+- OpenAI API key is read from add-on options (`openai_api_key`)
 - Forbidden token policy (blocks dangerous domains/services by default)
 - Manual approval phrase gate for non-dry-run writes
 - Max operations and max diff size limits
