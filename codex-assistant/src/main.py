@@ -229,6 +229,20 @@ def _chat_state_context(request: ChatRequest) -> tuple[list[dict[str, Any]], str
         return [], f"State context unavailable: {exc}"
 
 
+def _effective_openai_api_key(request_key: str | None) -> str:
+    if request_key and request_key.strip():
+        return request_key.strip()
+    if SETTINGS.openai_api_key:
+        return SETTINGS.openai_api_key
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            "openai_api_key is not configured in add-on options. "
+            "Provide openai_api_key in request body for one-off/session use."
+        ),
+    )
+
+
 @app.get("/", include_in_schema=False)
 def panel() -> FileResponse:
     index_path = STATIC_DIR / "index.html"
@@ -243,6 +257,7 @@ def health() -> dict[str, Any]:
         "status": "ok",
         "dry_run": SETTINGS.dry_run,
         "token_configured": bool(SETTINGS.auth_token),
+        "openai_key_configured": bool(SETTINGS.openai_api_key),
         "model": SETTINGS.openai_model,
         "require_manual_approval": SETTINGS.require_manual_approval,
         "max_apply_operations": SETTINGS.max_apply_operations,
@@ -422,11 +437,7 @@ def apply_operations(request: ApplyOperationsRequest) -> dict[str, Any]:
 
 @app.post("/ai/plan", dependencies=[Depends(require_auth)])
 def ai_plan(request: PlanRequest) -> dict[str, Any]:
-    if not SETTINGS.openai_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="openai_api_key is not configured in add-on options.",
-        )
+    request_openai_key = _effective_openai_api_key(request.openai_api_key)
     _enforce_goal_policy_or_400(request.goal)
     requested_max_ops = min(request.max_operations, SETTINGS.max_apply_operations)
 
@@ -437,7 +448,7 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
 
     try:
         model_result = generate_plan(
-            api_key=SETTINGS.openai_api_key,
+            api_key=request_openai_key,
             model=SETTINGS.openai_model,
             goal=request.goal,
             file_context=file_context,
@@ -513,12 +524,7 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
 
 @app.post("/chat", dependencies=[Depends(require_auth)])
 def chat(request: ChatRequest) -> dict[str, Any]:
-    if not SETTINGS.openai_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="openai_api_key is not configured in add-on options.",
-        )
-
+    request_openai_key = _effective_openai_api_key(request.openai_api_key)
     message = request.message.strip()
     if not message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="message is required.")
@@ -534,7 +540,7 @@ def chat(request: ChatRequest) -> dict[str, Any]:
 
     try:
         model_result = generate_chat_result(
-            api_key=SETTINGS.openai_api_key,
+            api_key=request_openai_key,
             model=SETTINGS.openai_model,
             message=message,
             history=history,
