@@ -46,7 +46,7 @@ SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.2.7",
+    version="0.2.8",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():

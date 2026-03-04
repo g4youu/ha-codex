@@ -212,6 +212,12 @@
         font-size: 0.82rem;
       }
 
+      .payload {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
       .op {
         border: 1px solid #6f8a93;
         border-radius: 12px;
@@ -297,7 +303,7 @@
           <h2>Conversation</h2>
           <div id="chatLog" class="chat-log"></div>
           <label for="chatResult">Latest response payload</label>
-          <pre id="chatResult" class="code">No chat requests yet.</pre>
+          <pre id="chatResult" class="code payload">No chat requests yet.</pre>
         </section>
       </section>
 
@@ -330,7 +336,7 @@
             <span id="selection" class="small">0 operations selected</span>
           </div>
           <label for="planResult">Result</label>
-          <pre id="planResult" class="code">No plan requests yet.</pre>
+          <pre id="planResult" class="code payload">No plan requests yet.</pre>
         </section>
       </section>
 
