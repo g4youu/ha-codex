@@ -1,6 +1,6 @@
 name: "Codex Assistant"
 description: "Secure AI-assisted Home Assistant chat and automation assistant"
-version: "0.2.3"
+version: "0.2.4"
 slug: "codex_assistant"
 url: "https://github.com/g4youu/ha-codex.git"
 arch:
@@ -24,7 +24,6 @@ map:
   - addon_config:rw
 options:
   log_level: info
-  auth_token: ""
   openai_api_key: ""
   model: "gpt-5-mini"
   dry_run: true
@@ -40,7 +39,6 @@ options:
   max_state_context_entities: 80
 schema:
   log_level: list(trace|debug|info|notice|warning|error|fatal)
-  auth_token: password?
   openai_api_key: password?
   model: str?
   dry_run: bool?

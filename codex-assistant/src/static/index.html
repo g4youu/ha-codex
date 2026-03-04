@@ -238,9 +238,7 @@
 
       <section class="panel">
         <h2>Session Guardrails</h2>
-        <label for="token">Bearer Token</label>
-        <input id="token" type="password" autocomplete="off" placeholder="Set auth_token in add-on options" />
-        <div class="small">OpenAI API key must be configured in the add-on options page.</div>
+        <div class="small">OpenAI API key is read from add-on options (`openai_api_key`).</div>
 
         <div class="grid two">
           <div>
@@ -288,7 +286,7 @@ ui-lovelace.yaml</textarea>
           </div>
           <div class="check-row">
             <input id="chatExecute" type="checkbox" />
-            <label for="chatExecute">Execute proposed actions now</label>
+            <label for="chatExecute">Execute proposed actions now (disable dry-run to actually run)</label>
           </div>
 
           <div class="actions">
@@ -348,7 +346,6 @@ ui-lovelace.yaml</textarea>
     </main>
 
     <script>
-      const tokenInput = document.getElementById("token");
       const approvalInput = document.getElementById("approval");
       const dryRunInput = document.getElementById("dryRun");
       const statusNode = document.getElementById("status");
@@ -375,25 +372,17 @@ ui-lovelace.yaml</textarea>
       const planResultNode = document.getElementById("planResult");
       const selectionNode = document.getElementById("selection");
 
-      const TOKEN_KEY = "codex_assistant_token";
       const APPROVAL_KEY = "codex_assistant_approval";
       const DRY_RUN_KEY = "codex_assistant_dry_run";
 
-      tokenInput.value = localStorage.getItem(TOKEN_KEY) || "";
       approvalInput.value = localStorage.getItem(APPROVAL_KEY) || "";
       dryRunInput.checked = (localStorage.getItem(DRY_RUN_KEY) || "true") === "true";
 
-      tokenInput.addEventListener("input", () => localStorage.setItem(TOKEN_KEY, tokenInput.value));
       approvalInput.addEventListener("input", () => localStorage.setItem(APPROVAL_KEY, approvalInput.value));
       dryRunInput.addEventListener("change", () => localStorage.setItem(DRY_RUN_KEY, String(dryRunInput.checked)));
 
       let planOperations = [];
       let chatHistory = [];
-
-      function authHeaders() {
-        const token = tokenInput.value.trim();
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      }
 
       function toPretty(payload) {
         return typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
@@ -410,6 +399,18 @@ ui-lovelace.yaml</textarea>
 
       function parseComma(text) {
         return text.split(",").map((line) => line.trim()).filter(Boolean);
+      }
+
+      async function readApiPayload(response) {
+        const rawText = await response.text();
+        if (!rawText) {
+          return {};
+        }
+        try {
+          return JSON.parse(rawText);
+        } catch {
+          return { detail: rawText };
+        }
       }
 
       function appendBubble(role, text) {
@@ -501,7 +502,7 @@ ui-lovelace.yaml</textarea>
       async function fetchHealth() {
         try {
           const response = await fetch("/health");
-          const data = await response.json();
+          const data = await readApiPayload(response);
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
@@ -540,10 +541,10 @@ ui-lovelace.yaml</textarea>
 
           const response = await fetch("/chat", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...authHeaders() },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          const data = await response.json();
+          const data = await readApiPayload(response);
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
@@ -583,14 +584,14 @@ ui-lovelace.yaml</textarea>
         try {
           const response = await fetch("/ai/plan", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...authHeaders() },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               goal,
               files: parseLines(planFilesInput.value),
               max_operations: Number(planMaxOpsInput.value) || 5,
             }),
           });
-          const data = await response.json();
+          const data = await readApiPayload(response);
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
@@ -624,7 +625,7 @@ ui-lovelace.yaml</textarea>
         try {
           const response = await fetch("/operations/apply", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...authHeaders() },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               operations: selected.map((op) => ({
                 path: op.path,
@@ -636,7 +637,7 @@ ui-lovelace.yaml</textarea>
               approval_phrase: approvalInput.value.trim() || null,
             }),
           });
-          const data = await response.json();
+          const data = await readApiPayload(response);
           if (!response.ok) {
             throw new Error(data.detail || `HTTP ${response.status}`);
           }

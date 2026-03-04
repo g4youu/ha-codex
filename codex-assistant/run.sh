@@ -4,9 +4,6 @@ set -euo pipefail
 export LOG_LEVEL
 LOG_LEVEL="$(bashio::config 'log_level')"
 
-export AUTH_TOKEN
-AUTH_TOKEN="$(bashio::config 'auth_token')"
-
 export OPENAI_API_KEY
 OPENAI_API_KEY="$(bashio::config 'openai_api_key')"
 

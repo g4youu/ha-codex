@@ -57,7 +57,6 @@ uvicorn src.main:app --reload --port 8099
 Set env vars for local testing:
 
 ```bash
-export AUTH_TOKEN="change-me"
 export DRY_RUN="true"
 export OPENAI_API_KEY=""
 export OPENAI_MODEL="gpt-5-mini"
@@ -79,10 +78,9 @@ export MAX_STATE_CONTEXT_ENTITIES="80"
 2. In Home Assistant: `Settings -> Add-ons -> Add-on Store -> (...) -> Repositories`.
 3. Add your repository URL.
 4. Install `Codex Assistant`.
-5. Configure `auth_token` (required for API access).
-6. Configure `openai_api_key` in add-on options.
-7. Keep `dry_run` enabled until you trust your workflow.
-8. Open the add-on panel (Ingress), paste token, and start with chat in dry-run mode.
+5. Configure `openai_api_key` in add-on options.
+6. Keep `dry_run` enabled until you trust your workflow.
+7. Open the add-on panel (Ingress) and start with chat in dry-run mode.
 
 ## API flow (recommended)
 
@@ -105,6 +103,6 @@ Core API endpoints:
 
 - The included ingress panel is intentionally lightweight so policy enforcement remains server-side.
 - For Lovelace in storage mode (`.storage`), keep writes manual or add dedicated safe handlers rather than broad file access.
-- For first production use, rotate `auth_token`, keep `dry_run=true`, and only disable it after validating output.
+- For first production use, keep `dry_run=true`, and only disable it after validating output.
 - Keep dangerous domains (`homeassistant`, `hassio`) out of `allowed_service_domains` unless you intentionally accept that risk.
 - To actually run actions (for example `light.turn_on`), set `execute=true` from UI and disable dry-run.

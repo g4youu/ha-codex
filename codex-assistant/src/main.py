@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -46,31 +46,11 @@ SERVICE_TOKEN_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.2.3",
+    version="0.2.4",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-
-def require_auth(authorization: str | None = Header(default=None)) -> None:
-    token = SETTINGS.auth_token
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="auth_token is not configured in add-on options.",
-        )
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing bearer token.",
-        )
-    presented = authorization[7:].strip()
-    if presented != token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token.",
-        )
 
 
 def _resolve_or_400(raw_path: str) -> tuple[Path, str]:
@@ -251,7 +231,6 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "dry_run": SETTINGS.dry_run,
-        "token_configured": bool(SETTINGS.auth_token),
         "openai_key_configured": bool(SETTINGS.openai_api_key),
         "model": SETTINGS.openai_model,
         "require_manual_approval": SETTINGS.require_manual_approval,
@@ -264,7 +243,7 @@ def health() -> dict[str, Any]:
     }
 
 
-@app.post("/files/read", dependencies=[Depends(require_auth)])
+@app.post("/files/read")
 def read_file(request: ReadFileRequest) -> dict[str, Any]:
     path, relative = _resolve_or_400(request.path)
     if not path.exists():
@@ -277,7 +256,7 @@ def read_file(request: ReadFileRequest) -> dict[str, Any]:
     }
 
 
-@app.post("/files/validate", dependencies=[Depends(require_auth)])
+@app.post("/files/validate")
 def validate_file(request: ValidateFileRequest) -> dict[str, Any]:
     path, relative = _resolve_or_400(request.path)
     if _is_yaml(path):
@@ -289,7 +268,7 @@ def validate_file(request: ValidateFileRequest) -> dict[str, Any]:
     }
 
 
-@app.post("/files/write", dependencies=[Depends(require_auth)])
+@app.post("/files/write")
 def write_file(request: WriteFileRequest) -> dict[str, Any]:
     path, relative = _resolve_or_400(request.path)
     if _is_yaml(path):
@@ -345,7 +324,7 @@ def write_file(request: WriteFileRequest) -> dict[str, Any]:
     }
 
 
-@app.post("/operations/apply", dependencies=[Depends(require_auth)])
+@app.post("/operations/apply")
 def apply_operations(request: ApplyOperationsRequest) -> dict[str, Any]:
     operations = request.operations
     if not operations:
@@ -430,7 +409,7 @@ def apply_operations(request: ApplyOperationsRequest) -> dict[str, Any]:
     return {"applied": True, "dry_run": False, "results": results}
 
 
-@app.post("/ai/plan", dependencies=[Depends(require_auth)])
+@app.post("/ai/plan")
 def ai_plan(request: PlanRequest) -> dict[str, Any]:
     configured_openai_key = _configured_openai_api_key()
     _enforce_goal_policy_or_400(request.goal)
@@ -517,7 +496,7 @@ def ai_plan(request: PlanRequest) -> dict[str, Any]:
     }
 
 
-@app.post("/chat", dependencies=[Depends(require_auth)])
+@app.post("/chat")
 def chat(request: ChatRequest) -> dict[str, Any]:
     configured_openai_key = _configured_openai_api_key()
     message = request.message.strip()

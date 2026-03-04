@@ -46,7 +46,6 @@ DEFAULT_ALLOWED_SERVICE_DOMAINS = (
 
 @dataclass(frozen=True)
 class Settings:
-    auth_token: str
     openai_api_key: str
     openai_model: str
     dry_run: bool
@@ -114,7 +113,6 @@ def load_settings() -> Settings:
         maximum=500,
     )
     return Settings(
-        auth_token=os.getenv("AUTH_TOKEN", "").strip(),
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini",
         dry_run=_as_bool(os.getenv("DRY_RUN"), default=True),
