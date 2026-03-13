@@ -1,6 +1,6 @@
 name: "Codex Assistant"
 description: "Secure AI-assisted Home Assistant chat and automation assistant"
-version: "0.2.8"
+version: "0.4.1"
 slug: "codex_assistant"
 url: "https://github.com/g4youu/ha-codex.git"
 arch:
@@ -29,6 +29,9 @@ options:
   dry_run: true
   require_manual_approval: true
   approval_phrase: "APPLY"
+  require_execute_confirmation: true
+  execute_pin: ""
+  local_fallback_enabled: true
   allow_dangerous_changes: false
   forbidden_tokens: "shell_command:,command_line:,python_script:,rest_command:,service: homeassistant.restart,service: hassio.host_reboot,service: hassio.host_shutdown,service: hassio.addon_start,service: hassio.addon_stop,service: hassio.addon_restart"
   max_apply_operations: 5
@@ -44,6 +47,9 @@ schema:
   dry_run: bool?
   require_manual_approval: bool?
   approval_phrase: str?
+  require_execute_confirmation: bool?
+  execute_pin: password?
+  local_fallback_enabled: bool?
   allow_dangerous_changes: bool?
   forbidden_tokens: str?
   max_apply_operations: int(1,10)?

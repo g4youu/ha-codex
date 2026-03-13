@@ -94,6 +94,36 @@ class ChatRequest(BaseModel):
         default=False,
         description="Execute proposed actions immediately (subject to policy and dry-run).",
     )
+    confirm_execute: bool = Field(
+        default=False,
+        description="Explicit confirmation that proposed actions were reviewed before execution.",
+    )
+    execute_pin: str | None = Field(
+        default=None,
+        description="Optional execution PIN for non-dry-run execution.",
+    )
     backup: bool = Field(default=True)
+    dry_run: bool | None = Field(default=None)
+    approval_phrase: str | None = Field(default=None)
+
+
+class InspectFilesRequest(BaseModel):
+    files: list[str] = Field(
+        default_factory=list,
+        description="Paths relative to /config to inspect for context size.",
+    )
+
+
+class ConversationProcessRequest(BaseModel):
+    text: str = Field(..., description="Conversation text input.")
+    conversation_id: str | None = Field(default=None)
+    files: list[str] = Field(default_factory=list)
+    include_state_context: bool | None = Field(default=None)
+    entity_ids: list[str] = Field(default_factory=list)
+    max_operations: int = Field(default=3, ge=1, le=10)
+    max_service_calls: int = Field(default=3, ge=1, le=10)
+    execute: bool = Field(default=False)
+    confirm_execute: bool = Field(default=False)
+    execute_pin: str | None = Field(default=None)
     dry_run: bool | None = Field(default=None)
     approval_phrase: str | None = Field(default=None)

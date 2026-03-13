@@ -60,6 +60,9 @@ class Settings:
     max_service_calls: int
     include_state_context: bool
     max_state_context_entities: int
+    local_fallback_enabled: bool
+    require_execute_confirmation: bool
+    execute_pin: str
 
 
 def _as_bool(raw: str | None, default: bool = False) -> bool:
@@ -130,4 +133,10 @@ def load_settings() -> Settings:
         max_service_calls=max_service_calls,
         include_state_context=_as_bool(os.getenv("INCLUDE_STATE_CONTEXT"), default=True),
         max_state_context_entities=max_state_context_entities,
+        local_fallback_enabled=_as_bool(os.getenv("LOCAL_FALLBACK_ENABLED"), default=True),
+        require_execute_confirmation=_as_bool(
+            os.getenv("REQUIRE_EXECUTE_CONFIRMATION"),
+            default=True,
+        ),
+        execute_pin=os.getenv("EXECUTE_PIN", "").strip(),
     )

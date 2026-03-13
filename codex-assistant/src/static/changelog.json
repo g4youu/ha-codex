@@ -1,0 +1,39 @@
+{
+  "entries": [
+    {
+      "version": "v0.4.1",
+      "date": "2026-03-13",
+      "notes": [
+        "Added local fallback mode for common light/switch commands and entity status checks",
+        "Added execution confirmation gate and optional execution PIN",
+        "Added file-context inspection API with UI byte/truncation warnings",
+        "Added entity suggestions and in-panel release notes",
+        "Added /conversation/process endpoint for Assist-style integrations",
+        "Replaced planner-heavy UI with compact chat-only layout and collapsible advanced controls"
+      ]
+    },
+    {
+      "version": "v0.2.8",
+      "date": "2026-03-13",
+      "notes": [
+        "Wrapped long payload output in panel"
+      ]
+    },
+    {
+      "version": "v0.2.7",
+      "date": "2026-03-13",
+      "notes": [
+        "Improved OpenAI 400/429 error details",
+        "Removed unsupported Responses API request fields"
+      ]
+    },
+    {
+      "version": "v0.2.6",
+      "date": "2026-03-13",
+      "notes": [
+        "Truncated oversized context files instead of failing chat",
+        "Stopped preloading large YAML files in chat context"
+      ]
+    }
+  ]
+}

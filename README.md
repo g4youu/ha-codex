@@ -1,107 +1,70 @@
 # Codex Assistant Add-on for Home Assistant
 
-This project is still in development. It is a secure starter for a Home Assistant add-on that works as a general Home Assistant assistant.
+Codex Assistant is a chat-first Home Assistant add-on focused on safe control, troubleshooting, and guided configuration changes.
 
-It can chat to:
+## What it does
 
-- Propose and run allowed Home Assistant service calls
-- Generate and apply YAML changes for automations, scripts, scenes, dashboards (YAML mode), and packages
+- Chat interface in Home Assistant side panel (Ingress)
+- Direct Home Assistant service-control proposals (`light`, `switch`, `climate`, etc.)
+- Optional immediate execution with guardrails
+- Troubleshooting with live Home Assistant state context
+- Safe YAML/file planning support for automations/scripts/scenes/dashboards/packages
+- Local fallback for common commands when OpenAI is unavailable (for example quota/rate-limit issues)
 
-The add-on supports two safe workflows:
+## Safety model
 
-1. Chat workflow:
-   - Ask for tasks in plain language.
-   - Review proposed service calls/file edits.
-   - Execute only with guardrails (dry-run + approval phrase).
+- Path allowlist for writable files under `/config`
+- YAML validation before writes
+- Diff-size guardrails
+- Dry-run mode by default
+- Manual approval phrase for non-dry-run writes
+- Optional execute confirmation + optional execution PIN
+- Service-domain allowlist
+- Automatic backups under `/config/.codex-backups`
+- Audit log under `/data/audit.log`
 
-2. File planning workflow:
-   - Generate a YAML plan (AI proposes file updates).
-   - Review diffs.
-   - Apply changes through guarded write endpoints.
+## Add-on options
 
-It includes an ingress panel at `/` so you can run this flow directly in Home Assistant.
+Required:
+- `openai_api_key`
 
-## Why this is safer
+Important options:
+- `dry_run`
+- `require_manual_approval`
+- `approval_phrase`
+- `require_execute_confirmation`
+- `execute_pin`
+- `local_fallback_enabled`
+- `allowed_service_domains`
 
-- Path allowlist (only specific Home Assistant YAML targets under `/config`)
-- No absolute paths, no path traversal
-- YAML validation before write
-- Optional global dry-run mode (on by default)
-- SHA-256 precondition checks to prevent blind overwrite
-- Automatic backups under `/config/.codex-backups/...`
-- JSONL audit log in `/data/audit.log`
-- OpenAI API key is read from add-on options (`openai_api_key`)
-- Forbidden token policy (blocks dangerous domains/services by default)
-- Manual approval phrase gate for non-dry-run writes
-- Max operations and max diff size limits
-- Service-domain allowlist for runtime Home Assistant actions
+## Home Assistant install
 
-## Repository layout
+1. In Home Assistant: `Settings -> Add-ons -> Add-on Store -> (...) -> Repositories`
+2. Add repository URL: `https://github.com/g4youu/ha-codex.git`
+3. Install `Codex Assistant`
+4. Configure `openai_api_key` in add-on options
+5. Start add-on and open the side panel
 
-- `repository.yaml`: Home Assistant add-on repository metadata
-- `codex-assistant/`: add-on bundle
-- `codex-assistant/src/`: FastAPI service
+## Core endpoints
 
-## Home Assistant install (custom repository)
-
-1. In Home Assistant: `Settings -> Add-ons -> Add-on Store -> (...) -> Repositories`.
-2. Add this project repository URL.
-3. Install `Codex Assistant` and enable the sidebar panel.
-4. Configure `openai_api_key` in add-on configuration option.
-5. Keep `dry_run` enabled until you trust your workflow.
-6. Open the add-on sidebar panel (Ingress) and start with chat in dry-run mode.
-
-## Local development
-
-From this workspace:
-
-```bash
-cd "codex-assistant"
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn src.main:app --reload --port 8099
-```
-
-Set env vars for local testing:
-
-```bash
-export DRY_RUN="true"
-export OPENAI_API_KEY=""
-export OPENAI_MODEL="gpt-5-mini"
-export REQUIRE_MANUAL_APPROVAL="true"
-export APPROVAL_PHRASE="APPLY"
-export ALLOW_DANGEROUS_CHANGES="false"
-export FORBIDDEN_TOKENS="shell_command:,command_line:,python_script:,rest_command:,service: homeassistant.restart,service: hassio.host_reboot,service: hassio.host_shutdown"
-export MAX_APPLY_OPERATIONS="5"
-export MAX_DIFF_CHARS="40000"
-export ALLOWED_SERVICE_DOMAINS="light,switch,scene,script,automation,input_boolean,input_number,media_player,cover,climate,fan,lock,notify"
-export MAX_SERVICE_CALLS="4"
-export INCLUDE_STATE_CONTEXT="true"
-export MAX_STATE_CONTEXT_ENTITIES="80"
-```
-
-## API flow (recommended)
-
-1. `POST /chat`: ask in plain language and review proposed service calls/file edits.
-2. Keep `dry_run=true` while validating outputs and diffs.
-3. Execute for real only after review and with `approval_phrase`.
-
-Core API endpoints:
-
-- `GET /`: Ingress panel UI
+- `GET /` panel UI
 - `GET /health`
 - `POST /chat`
+- `POST /conversation/process` (Assist-style wrapper)
+- `GET /entities/suggest`
+- `POST /files/inspect`
 - `POST /ai/plan`
 - `POST /operations/apply`
 - `POST /files/read`
 - `POST /files/validate`
 - `POST /files/write`
 
-## Notes
+## Development
 
-- The included ingress panel is intentionally lightweight so policy enforcement remains server-side.
-- For Lovelace in storage mode (`.storage`), keep writes manual or add dedicated safe handlers rather than broad file access.
-- For first production use, keep `dry_run=true`, and only disable it after validating output.
-- Keep dangerous domains (`homeassistant`, `hassio`) out of `allowed_service_domains` unless you intentionally accept that risk.
-- To actually run actions (for example `light.turn_on`), set `execute=true` from UI and disable dry-run.
+```bash
+cd codex-assistant
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn src.main:app --reload --port 8099
+```

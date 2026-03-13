@@ -14,7 +14,6 @@
         --accent: #e95f2c;
         --accent-soft: #ff8a5f;
         --line: #295059;
-        --ok: #2f8f4e;
         --warn: #b84d2a;
       }
 
@@ -31,82 +30,79 @@
           radial-gradient(circle at 10% 10%, #205a66 0%, transparent 40%),
           radial-gradient(circle at 92% 18%, #9f3f1f 0%, transparent 32%),
           linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
-        padding: 20px;
+        padding: 16px;
       }
 
       .layout {
-        max-width: 1260px;
+        width: 100%;
+        max-width: 880px;
         margin: 0 auto;
         display: grid;
-        gap: 16px;
+        gap: 12px;
       }
 
       .hero {
         color: #f9fffb;
         border: 1px solid #44717a;
-        border-radius: 18px;
-        padding: 18px 22px;
+        border-radius: 14px;
+        padding: 14px 16px;
         background: linear-gradient(120deg, rgb(14 41 47 / 0.86), rgb(24 70 78 / 0.75));
       }
 
       .hero h1 {
         margin: 0;
-        font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+        font-size: clamp(1.2rem, 2vw, 1.8rem);
         letter-spacing: 0.02em;
         text-transform: uppercase;
       }
 
       .hero p {
-        margin: 8px 0 0;
+        margin: 6px 0 0;
         color: #dcf1ec;
       }
 
       .status-pill {
         display: inline-block;
-        margin-top: 10px;
-        padding: 7px 12px;
+        margin-top: 8px;
+        padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid #8ac8b9;
         background: rgb(7 31 36 / 0.45);
-        font-size: 0.9rem;
+        font-size: 0.84rem;
       }
 
       .panel {
-        border-radius: 18px;
+        border-radius: 14px;
         background: var(--surface);
         border: 2px solid var(--line);
-        box-shadow: 8px 8px 0 rgb(10 40 47 / 0.25);
-        padding: 16px;
+        box-shadow: 4px 4px 0 rgb(10 40 47 / 0.2);
+        padding: 12px;
       }
 
       .panel h2 {
-        margin: 0 0 12px;
+        margin: 0 0 10px;
         text-transform: uppercase;
-        font-size: 1rem;
-        letter-spacing: 0.08em;
+        font-size: 0.98rem;
+        letter-spacing: 0.06em;
       }
 
-      .grid {
-        display: grid;
-        gap: 16px;
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
-      .grid.two {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      @media (max-width: 980px) {
-        .grid.two {
-          grid-template-columns: 1fr;
-        }
+      .row > * {
+        flex: 1;
+        min-width: 180px;
       }
 
       label {
         display: block;
-        margin: 9px 0 6px;
-        font-size: 0.83rem;
+        margin: 8px 0 5px;
+        font-size: 0.78rem;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.05em;
         font-weight: 600;
       }
 
@@ -116,16 +112,34 @@
       textarea {
         width: 100%;
         border: 1px solid #5c7781;
-        border-radius: 12px;
-        padding: 10px 11px;
+        border-radius: 10px;
+        padding: 9px 10px;
         background: #fffef9;
         color: var(--ink);
         font: inherit;
       }
 
       textarea {
-        min-height: 90px;
+        min-height: 84px;
         resize: vertical;
+      }
+
+      .small {
+        font-size: 0.83rem;
+      }
+
+      .hint {
+        margin-top: 4px;
+        color: #3d4d53;
+        font-size: 0.82rem;
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .hint.warn {
+        color: var(--warn);
       }
 
       .check-row {
@@ -138,51 +152,18 @@
       .check-row label {
         margin: 0;
         text-transform: none;
-        letter-spacing: 0.01em;
+        letter-spacing: 0;
         font-size: 0.9rem;
         font-weight: 500;
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      button {
-        border: 0;
-        border-radius: 12px;
-        padding: 10px 14px;
-        background: linear-gradient(180deg, var(--accent-soft), var(--accent));
-        color: #fffefb;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      button:disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-      }
-
-      .small {
-        font-size: 0.86rem;
-      }
-
-      .warn {
-        color: var(--warn);
       }
 
       .chat-log {
         border: 1px solid #6f8a93;
         background: #f9f9f2;
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 10px;
-        min-height: 180px;
-        max-height: 360px;
+        min-height: 220px;
+        max-height: 420px;
         overflow: auto;
       }
 
@@ -200,6 +181,31 @@
         background: #e8efe0;
       }
 
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: linear-gradient(180deg, var(--accent-soft), var(--accent));
+        color: #fffefb;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
       .code {
         margin: 8px 0 0;
         border-radius: 10px;
@@ -209,28 +215,37 @@
         padding: 10px;
         overflow: auto;
         font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-        font-size: 0.82rem;
-      }
-
-      .payload {
+        font-size: 0.8rem;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         word-break: break-word;
       }
 
-      .op {
+      details {
         border: 1px solid #6f8a93;
-        border-radius: 12px;
+        border-radius: 10px;
+        padding: 8px;
         background: var(--surface-soft);
-        padding: 10px;
-        margin-top: 10px;
       }
 
-      .op-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.82rem;
+      }
+
+      .release-item {
+        border: 1px solid #6f8a93;
+        border-radius: 10px;
+        padding: 8px;
+        margin-top: 6px;
+        background: #f3f5ea;
+      }
+
+      .release-title {
+        font-weight: 700;
       }
     </style>
   </head>
@@ -238,42 +253,55 @@
     <main class="layout">
       <section class="hero">
         <h1>Codex Assistant</h1>
-        <p>General Home Assistant chat with guarded execution, plus advanced YAML planning.</p>
+        <p>Chat-first Home Assistant assistant for control, troubleshooting, automations, and dashboards.</p>
         <div id="status" class="status-pill">Checking health...</div>
       </section>
 
       <section class="panel">
-        <h2>Session Guardrails</h2>
-        <div class="small">OpenAI API key is read from add-on options (`openai_api_key`).</div>
+        <h2>Conversation</h2>
+        <div id="chatLog" class="chat-log"></div>
 
-        <div class="grid two">
-          <div>
-            <label for="approval">Approval Phrase</label>
-            <input id="approval" type="text" placeholder="APPLY" />
+        <label for="chatMessage">Message</label>
+        <textarea id="chatMessage" placeholder="Example: Turn on light.kitchen and tell me what devices are unavailable."></textarea>
+        <div id="chatMessageMeta" class="hint">0 chars</div>
+
+        <div class="actions">
+          <button id="chatSendBtn" type="button">Send Chat</button>
+          <button id="chatClearBtn" type="button">Clear Chat</button>
+        </div>
+
+        <details id="advancedPanel" style="margin-top: 10px">
+          <summary>Advanced Options</summary>
+
+          <div class="check-row">
+            <input id="dryRun" type="checkbox" checked />
+            <label for="dryRun">Use dry-run (recommended until validated)</label>
           </div>
-          <div>
-            <div class="check-row">
-              <input id="dryRun" type="checkbox" checked />
-              <label for="dryRun">Use dry-run (recommended until validated)</label>
+          <div class="check-row">
+            <input id="chatIncludeState" type="checkbox" checked />
+            <label for="chatIncludeState">Include Home Assistant state context</label>
+          </div>
+          <div class="check-row">
+            <input id="chatExecute" type="checkbox" />
+            <label for="chatExecute">Execute proposed actions now (when dry-run is off)</label>
+          </div>
+          <div class="check-row">
+            <input id="chatConfirmExecute" type="checkbox" />
+            <label for="chatConfirmExecute">I reviewed proposed actions and confirm execution</label>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="approval">Approval Phrase</label>
+              <input id="approval" type="text" placeholder="APPLY" />
+            </div>
+            <div>
+              <label for="chatExecutePin">Execution PIN (optional)</label>
+              <input id="chatExecutePin" type="password" placeholder="Required only if execute_pin is configured" />
             </div>
           </div>
-        </div>
-      </section>
 
-      <section class="grid two">
-        <section class="panel">
-          <h2>Chat Assistant</h2>
-          <label for="chatMessage">Message</label>
-          <textarea id="chatMessage" placeholder="Example: Turn on the kitchen lights and create an automation to turn them off at 11 PM."></textarea>
-
-          <label for="chatFiles">Optional file context (one per line)</label>
-          <textarea id="chatFiles" placeholder="automations.yaml&#10;scripts.yaml"></textarea>
-          <div class="small">Leave empty for normal control chat. Add files only for YAML edit requests.</div>
-
-          <label for="chatEntities">Optional entity IDs (comma-separated)</label>
-          <input id="chatEntities" type="text" placeholder="light.kitchen, climate.living_room" />
-
-          <div class="grid two">
+          <div class="row">
             <div>
               <label for="chatMaxOps">Max file operations</label>
               <input id="chatMaxOps" type="number" min="1" max="10" value="3" />
@@ -284,109 +312,91 @@
             </div>
           </div>
 
-          <div class="check-row">
-            <input id="chatIncludeState" type="checkbox" checked />
-            <label for="chatIncludeState">Include Home Assistant state context</label>
-          </div>
-          <div class="check-row">
-            <input id="chatExecute" type="checkbox" />
-            <label for="chatExecute">Execute proposed actions now (disable dry-run to actually run)</label>
-          </div>
+          <label for="chatEntities">Optional entity IDs (comma-separated)</label>
+          <input id="chatEntities" type="text" placeholder="light.kitchen, climate.living_room" list="entitySuggestions" />
+          <datalist id="entitySuggestions"></datalist>
+          <div id="chatEntitiesMeta" class="hint">Loading entity suggestions...</div>
 
-          <div class="actions">
-            <button id="chatSendBtn" type="button">Send Chat</button>
-            <button id="chatClearBtn" type="button">Clear Chat</button>
-          </div>
-        </section>
+          <label for="chatFiles">Optional file context (one per line)</label>
+          <textarea id="chatFiles" placeholder="automations.yaml&#10;scripts.yaml"></textarea>
+          <div class="small">Leave empty for normal control chat. Add files only when asking for YAML/dashboard edits.</div>
+          <div id="chatFilesMeta" class="hint">No context files selected.</div>
+        </details>
 
-        <section class="panel">
-          <h2>Conversation</h2>
-          <div id="chatLog" class="chat-log"></div>
-          <label for="chatResult">Latest response payload</label>
-          <pre id="chatResult" class="code payload">No chat requests yet.</pre>
-        </section>
+        <details style="margin-top: 10px">
+          <summary>Action Preview</summary>
+          <div id="chatActions" class="small" style="margin-top: 8px">No chat actions yet.</div>
+        </details>
+
+        <details style="margin-top: 10px">
+          <summary>Latest Response Payload</summary>
+          <pre id="chatResult" class="code">No chat requests yet.</pre>
+        </details>
       </section>
 
       <section class="panel">
-        <h2>Chat Action Preview</h2>
-        <div id="chatActions" class="small">No chat actions yet.</div>
-      </section>
-
-      <section class="grid two">
-        <section class="panel">
-          <h2>File Planner (Advanced)</h2>
-          <label for="planGoal">Goal</label>
-          <textarea id="planGoal" placeholder="Example: Create a package with porch light automation and notification script."></textarea>
-
-          <label for="planFiles">Target files (one per line)</label>
-          <textarea id="planFiles" placeholder="automations.yaml&#10;scripts.yaml&#10;scenes.yaml&#10;ui-lovelace.yaml"></textarea>
-
-          <label for="planMaxOps">Max operations</label>
-          <input id="planMaxOps" type="number" min="1" max="10" value="5" />
-
-          <div class="actions">
-            <button id="planBtn" type="button">Generate Plan</button>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h2>Apply Plan Operations</h2>
-          <div class="actions">
-            <button id="applyBtn" type="button">Apply Selected</button>
-            <span id="selection" class="small">0 operations selected</span>
-          </div>
-          <label for="planResult">Result</label>
-          <pre id="planResult" class="code payload">No plan requests yet.</pre>
-        </section>
-      </section>
-
-      <section class="panel">
-        <h2>Planned File Operations</h2>
-        <div id="ops" class="small">No plan generated.</div>
+        <details>
+          <summary>Release Notes</summary>
+          <div id="releaseNotes" class="small" style="margin-top: 8px">Loading changelog...</div>
+        </details>
       </section>
     </main>
 
     <script>
+      const statusNode = document.getElementById("status");
       const approvalInput = document.getElementById("approval");
       const dryRunInput = document.getElementById("dryRun");
-      const statusNode = document.getElementById("status");
-
-      const chatMessageInput = document.getElementById("chatMessage");
-      const chatFilesInput = document.getElementById("chatFiles");
-      const chatEntitiesInput = document.getElementById("chatEntities");
-      const chatMaxOpsInput = document.getElementById("chatMaxOps");
-      const chatMaxServiceInput = document.getElementById("chatMaxService");
       const chatIncludeStateInput = document.getElementById("chatIncludeState");
       const chatExecuteInput = document.getElementById("chatExecute");
+      const chatConfirmExecuteInput = document.getElementById("chatConfirmExecute");
+      const chatExecutePinInput = document.getElementById("chatExecutePin");
+      const chatMaxOpsInput = document.getElementById("chatMaxOps");
+      const chatMaxServiceInput = document.getElementById("chatMaxService");
+      const chatEntitiesInput = document.getElementById("chatEntities");
+      const chatEntitiesMetaNode = document.getElementById("chatEntitiesMeta");
+      const chatFilesInput = document.getElementById("chatFiles");
+      const chatFilesMetaNode = document.getElementById("chatFilesMeta");
+      const chatMessageInput = document.getElementById("chatMessage");
+      const chatMessageMetaNode = document.getElementById("chatMessageMeta");
       const chatSendBtn = document.getElementById("chatSendBtn");
       const chatClearBtn = document.getElementById("chatClearBtn");
       const chatLogNode = document.getElementById("chatLog");
-      const chatResultNode = document.getElementById("chatResult");
       const chatActionsNode = document.getElementById("chatActions");
-
-      const planGoalInput = document.getElementById("planGoal");
-      const planFilesInput = document.getElementById("planFiles");
-      const planMaxOpsInput = document.getElementById("planMaxOps");
-      const planBtn = document.getElementById("planBtn");
-      const applyBtn = document.getElementById("applyBtn");
-      const opsNode = document.getElementById("ops");
-      const planResultNode = document.getElementById("planResult");
-      const selectionNode = document.getElementById("selection");
+      const chatResultNode = document.getElementById("chatResult");
+      const entitySuggestionsNode = document.getElementById("entitySuggestions");
+      const releaseNotesNode = document.getElementById("releaseNotes");
 
       const APPROVAL_KEY = "codex_assistant_approval";
       const DRY_RUN_KEY = "codex_assistant_dry_run";
+      const CHAT_FILES_KEY = "codex_assistant_chat_files";
 
       approvalInput.value = localStorage.getItem(APPROVAL_KEY) || "";
       dryRunInput.checked = (localStorage.getItem(DRY_RUN_KEY) || "true") === "true";
+      chatFilesInput.value = localStorage.getItem(CHAT_FILES_KEY) || "";
 
       approvalInput.addEventListener("input", () => localStorage.setItem(APPROVAL_KEY, approvalInput.value));
       dryRunInput.addEventListener("change", () => localStorage.setItem(DRY_RUN_KEY, String(dryRunInput.checked)));
+      chatFilesInput.addEventListener("input", () => localStorage.setItem(CHAT_FILES_KEY, chatFilesInput.value));
 
-      let planOperations = [];
       let chatHistory = [];
+      let inspectTimer = null;
 
       function apiPath(path) {
         return `./${path.replace(/^\/+/, "")}`;
+      }
+
+      function parseLines(text) {
+        return text
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+      }
+
+      function parseComma(text) {
+        return text
+          .split(",")
+          .map((line) => line.trim())
+          .filter(Boolean);
       }
 
       function toPretty(payload) {
@@ -398,12 +408,18 @@
         node.classList.toggle("warn", Boolean(isError));
       }
 
-      function parseLines(text) {
-        return text.split("\n").map((line) => line.trim()).filter(Boolean);
-      }
-
-      function parseComma(text) {
-        return text.split(",").map((line) => line.trim()).filter(Boolean);
+      function friendlyErrorMessage(raw) {
+        const message = String(raw || "");
+        if (/insufficient_quota|quota is exhausted|exceeded your current quota/i.test(message)) {
+          return "OpenAI API quota is exhausted. Add billing/credits to your OpenAI API project, then retry.";
+        }
+        if (/invalid_api_key|authentication failed/i.test(message)) {
+          return "OpenAI API key is invalid. Update openai_api_key in add-on options and restart the add-on.";
+        }
+        if (/rate limit/i.test(message)) {
+          return "OpenAI rate limit hit. Wait briefly and try again.";
+        }
+        return message;
       }
 
       async function readApiPayload(response) {
@@ -426,48 +442,6 @@
         chatLogNode.scrollTop = chatLogNode.scrollHeight;
       }
 
-      function checkedPlanOps() {
-        const checked = [];
-        document.querySelectorAll('input[name="operation"]:checked').forEach((node) => {
-          const idx = Number(node.value);
-          if (Number.isInteger(idx) && planOperations[idx]) {
-            checked.push(planOperations[idx]);
-          }
-        });
-        return checked;
-      }
-
-      function updateSelection() {
-        selectionNode.textContent = `${checkedPlanOps().length} operations selected`;
-      }
-
-      function renderPlanOperations(list) {
-        if (!list.length) {
-          opsNode.textContent = "No valid operations returned.";
-          updateSelection();
-          return;
-        }
-
-        opsNode.innerHTML = "";
-        list.forEach((op, idx) => {
-          const item = document.createElement("div");
-          item.className = "op";
-          item.innerHTML = `
-            <div class="op-header">
-              <input type="checkbox" name="operation" value="${idx}" checked />
-              <strong>${op.path}</strong>
-            </div>
-            <div>${op.reason || "No reason provided."}</div>
-            <pre class="code">${op.diff || "No diff available."}</pre>
-          `;
-          opsNode.appendChild(item);
-        });
-        document.querySelectorAll('input[name="operation"]').forEach((node) => {
-          node.addEventListener("change", updateSelection);
-        });
-        updateSelection();
-      }
-
       function renderChatActions(data) {
         const fileOps = Array.isArray(data.file_operations) ? data.file_operations : [];
         const serviceCalls = Array.isArray(data.service_calls) ? data.service_calls : [];
@@ -481,7 +455,7 @@
           chunks.push("<h3>Service Calls</h3>");
           serviceCalls.forEach((call) => {
             chunks.push(`
-              <div class="op">
+              <div style="border:1px solid #6f8a93; border-radius:8px; padding:8px; margin-top:6px;">
                 <div><strong>${call.domain}.${call.service}</strong></div>
                 <div>${call.reason || "No reason provided."}</div>
                 <pre class="code">${toPretty(call.data || {})}</pre>
@@ -493,7 +467,7 @@
           chunks.push("<h3>File Operations</h3>");
           fileOps.forEach((op) => {
             chunks.push(`
-              <div class="op">
+              <div style="border:1px solid #6f8a93; border-radius:8px; padding:8px; margin-top:6px;">
                 <div><strong>${op.path}</strong></div>
                 <div>${op.reason || "No reason provided."}</div>
                 <pre class="code">${op.diff || "No diff available."}</pre>
@@ -504,6 +478,124 @@
         chatActionsNode.innerHTML = chunks.join("");
       }
 
+      function updateMessageMeta() {
+        const chars = chatMessageInput.value.length;
+        const estTokens = Math.ceil(chars / 4);
+        chatMessageMetaNode.textContent = `${chars} chars (~${estTokens} tokens)`;
+      }
+
+      async function inspectChatFiles() {
+        const files = parseLines(chatFilesInput.value);
+        if (!files.length) {
+          chatFilesMetaNode.textContent = "No context files selected.";
+          chatFilesMetaNode.classList.remove("warn");
+          return;
+        }
+
+        try {
+          const response = await fetch(apiPath("files/inspect"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ files }),
+          });
+          const data = await readApiPayload(response);
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+
+          const inspected = Array.isArray(data.files) ? data.files : [];
+          const warnings = [];
+          inspected.forEach((item) => {
+            if (!item.exists) {
+              warnings.push(`${item.path}: missing`);
+              return;
+            }
+            if (item.truncated) {
+              warnings.push(`${item.path}: truncated at ${data.max_ai_file_context_bytes} bytes`);
+            }
+          });
+
+          const total = data.total_included_bytes || 0;
+          const summary = `Selected ${inspected.length} file(s), approx ${total} bytes sent to AI.`;
+          if (warnings.length) {
+            chatFilesMetaNode.textContent = `${summary} Warnings: ${warnings.join(" | ")}`;
+            chatFilesMetaNode.classList.add("warn");
+          } else {
+            chatFilesMetaNode.textContent = summary;
+            chatFilesMetaNode.classList.remove("warn");
+          }
+        } catch (error) {
+          chatFilesMetaNode.textContent = `Context file check failed: ${friendlyErrorMessage(error.message)}`;
+          chatFilesMetaNode.classList.add("warn");
+        }
+      }
+
+      function scheduleInspectChatFiles() {
+        if (inspectTimer) {
+          clearTimeout(inspectTimer);
+        }
+        inspectTimer = setTimeout(() => {
+          inspectTimer = null;
+          inspectChatFiles();
+        }, 350);
+      }
+
+      async function loadEntitySuggestions() {
+        try {
+          const response = await fetch(apiPath("entities/suggest?limit=200"));
+          const data = await readApiPayload(response);
+          if (!response.ok) {
+            throw new Error(data.detail || `HTTP ${response.status}`);
+          }
+
+          const entities = Array.isArray(data.entities) ? data.entities : [];
+          entitySuggestionsNode.innerHTML = "";
+          entities.forEach((entity) => {
+            const entityId = entity.entity_id || "";
+            if (!entityId) {
+              return;
+            }
+            const option = document.createElement("option");
+            option.value = entityId;
+            option.label = entity.friendly_name ? `${entity.friendly_name} (${entityId})` : entityId;
+            entitySuggestionsNode.appendChild(option);
+          });
+          chatEntitiesMetaNode.textContent = `Loaded ${entities.length} entity suggestions.`;
+          chatEntitiesMetaNode.classList.remove("warn");
+        } catch (error) {
+          chatEntitiesMetaNode.textContent = `Entity suggestions unavailable: ${friendlyErrorMessage(error.message)}`;
+          chatEntitiesMetaNode.classList.add("warn");
+        }
+      }
+
+      async function loadChangelog() {
+        try {
+          const response = await fetch(apiPath("static/changelog.json"));
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const data = await response.json();
+          const entries = Array.isArray(data.entries) ? data.entries : [];
+          if (!entries.length) {
+            releaseNotesNode.textContent = "No release notes available.";
+            return;
+          }
+          releaseNotesNode.innerHTML = entries
+            .slice(0, 6)
+            .map(
+              (entry) => `
+                <div class="release-item">
+                  <div class="release-title">${entry.version} (${entry.date})</div>
+                  <div>${Array.isArray(entry.notes) ? entry.notes.join(" | ") : ""}</div>
+                </div>
+              `
+            )
+            .join("");
+        } catch (error) {
+          releaseNotesNode.textContent = `Unable to load release notes: ${friendlyErrorMessage(error.message)}`;
+        }
+      }
+
       async function fetchHealth() {
         try {
           const response = await fetch(apiPath("health"));
@@ -512,10 +604,11 @@
             throw new Error(data.detail || `HTTP ${response.status}`);
           }
           const keyState = data.openai_key_configured ? "configured" : "missing";
-          statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | manual_approval=${data.require_manual_approval} | openai_key=${keyState} | service_domains=${(data.allowed_service_domains || []).join(",")}`;
+          const pinState = data.execute_pin_configured ? "set" : "not_set";
+          statusNode.textContent = `Health: ok | dry_run=${data.dry_run} | execute_confirm=${data.require_execute_confirmation} | execute_pin=${pinState} | local_fallback=${data.local_fallback_enabled} | openai_key=${keyState}`;
           statusNode.classList.remove("warn");
         } catch (error) {
-          statusNode.textContent = `Health check failed: ${error.message}`;
+          statusNode.textContent = `Health check failed: ${friendlyErrorMessage(error.message)}`;
           statusNode.classList.add("warn");
         }
       }
@@ -526,6 +619,7 @@
           setResult(chatResultNode, "Message is required.", true);
           return;
         }
+
         appendBubble("user", message);
         chatSendBtn.disabled = true;
         setResult(chatResultNode, "Sending chat request...", false);
@@ -540,6 +634,8 @@
             max_operations: Number(chatMaxOpsInput.value) || 3,
             max_service_calls: Number(chatMaxServiceInput.value) || 3,
             execute: chatExecuteInput.checked,
+            confirm_execute: chatConfirmExecuteInput.checked,
+            execute_pin: chatExecutePinInput.value.trim() || null,
             backup: true,
             dry_run: dryRunInput.checked,
             approval_phrase: approvalInput.value.trim() || null,
@@ -564,10 +660,11 @@
           renderChatActions(data);
           setResult(chatResultNode, data, false);
         } catch (error) {
-          setResult(chatResultNode, error.message, true);
+          setResult(chatResultNode, friendlyErrorMessage(error.message), true);
         } finally {
           chatSendBtn.disabled = false;
           chatMessageInput.value = "";
+          updateMessageMeta();
         }
       }
 
@@ -578,88 +675,16 @@
         setResult(chatResultNode, "No chat requests yet.", false);
       }
 
-      async function generatePlan() {
-        const goal = planGoalInput.value.trim();
-        if (!goal) {
-          setResult(planResultNode, "Goal is required.", true);
-          return;
-        }
-        planBtn.disabled = true;
-        setResult(planResultNode, "Generating plan...", false);
-
-        try {
-          const response = await fetch(apiPath("ai/plan"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              goal,
-              files: parseLines(planFilesInput.value),
-              max_operations: Number(planMaxOpsInput.value) || 5,
-            }),
-          });
-          const data = await readApiPayload(response);
-          if (!response.ok) {
-            throw new Error(data.detail || `HTTP ${response.status}`);
-          }
-          planOperations = Array.isArray(data.operations) ? data.operations : [];
-          renderPlanOperations(planOperations);
-          setResult(
-            planResultNode,
-            {
-              model: data.model,
-              max_operations: data.max_operations,
-              operation_count: planOperations.length,
-            },
-            false
-          );
-        } catch (error) {
-          setResult(planResultNode, error.message, true);
-        } finally {
-          planBtn.disabled = false;
-        }
-      }
-
-      async function applySelected() {
-        const selected = checkedPlanOps();
-        if (!selected.length) {
-          setResult(planResultNode, "Select at least one operation.", true);
-          return;
-        }
-
-        applyBtn.disabled = true;
-        setResult(planResultNode, "Applying operations...", false);
-        try {
-          const response = await fetch(apiPath("operations/apply"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              operations: selected.map((op) => ({
-                path: op.path,
-                content: op.content,
-                reason: op.reason,
-              })),
-              backup: true,
-              dry_run: dryRunInput.checked,
-              approval_phrase: approvalInput.value.trim() || null,
-            }),
-          });
-          const data = await readApiPayload(response);
-          if (!response.ok) {
-            throw new Error(data.detail || `HTTP ${response.status}`);
-          }
-          setResult(planResultNode, data, false);
-        } catch (error) {
-          setResult(planResultNode, error.message, true);
-        } finally {
-          applyBtn.disabled = false;
-        }
-      }
-
       chatSendBtn.addEventListener("click", sendChat);
       chatClearBtn.addEventListener("click", clearChat);
-      planBtn.addEventListener("click", generatePlan);
-      applyBtn.addEventListener("click", applySelected);
+      chatMessageInput.addEventListener("input", updateMessageMeta);
+      chatFilesInput.addEventListener("input", scheduleInspectChatFiles);
+
+      updateMessageMeta();
       fetchHealth();
+      loadEntitySuggestions();
+      inspectChatFiles();
+      loadChangelog();
     </script>
   </body>
 </html>

@@ -43,4 +43,13 @@ INCLUDE_STATE_CONTEXT="$(bashio::config 'include_state_context')"
 export MAX_STATE_CONTEXT_ENTITIES
 MAX_STATE_CONTEXT_ENTITIES="$(bashio::config 'max_state_context_entities')"
 
+export LOCAL_FALLBACK_ENABLED
+LOCAL_FALLBACK_ENABLED="$(bashio::config 'local_fallback_enabled')"
+
+export REQUIRE_EXECUTE_CONFIRMATION
+REQUIRE_EXECUTE_CONFIRMATION="$(bashio::config 'require_execute_confirmation')"
+
+export EXECUTE_PIN
+EXECUTE_PIN="$(bashio::config 'execute_pin')"
+
 exec uvicorn src.main:app --host 0.0.0.0 --port 8099

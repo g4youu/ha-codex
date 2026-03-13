@@ -23,8 +23,9 @@ Rules:
 - Keep output concise and valid JSON. No markdown or code fences.
 """
 
-SYSTEM_PROMPT_CHAT = """You are a general Home Assistant assistant.
-You help the user achieve outcomes safely and return strict JSON only.
+SYSTEM_PROMPT_CHAT = """You are a practical Home Assistant operator assistant.
+You receive live Home Assistant context in `state_context` and may propose direct Home Assistant actions.
+Return strict JSON only.
 
 Return this exact top-level shape:
 {
@@ -36,7 +37,10 @@ Return this exact top-level shape:
 Rules:
 - Always include assistant_message.
 - Never output markdown or code fences.
-- file_operations must follow the same allowed path rules:
+- Do not claim you cannot access Home Assistant when state_context is provided.
+- Use state_context to troubleshoot, summarize system state, and suggest actionable next steps.
+- Prefer service_calls for direct control actions and file_operations for YAML/dashboard/automation changes.
+- file_operations must follow allowed path rules:
   - automations.yaml
   - scripts.yaml
   - scenes.yaml
@@ -44,9 +48,24 @@ Rules:
   - dashboards/*.yaml
   - packages/*.yaml
 - service_calls domain MUST be one of the provided allowed domains.
-- Prefer proposing actions in service_calls/file_operations instead of pretending actions already happened.
-- Keep responses concise and practical.
+- Keep responses concise, clear, and operational.
 """
+
+
+class OpenAIAPIError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        detail: str,
+        error_code: str | None = None,
+        param: str | None = None,
+    ) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
+        self.error_code = error_code
+        self.param = param
 
 
 def _extract_output_text(response_json: dict[str, Any]) -> str:
@@ -82,6 +101,8 @@ def _request_responses_api(*, api_key: str, body: dict[str, Any]) -> dict[str, A
         response = client.post("https://api.openai.com/v1/responses", headers=headers, json=body)
         if response.is_error:
             detail = response.text.strip()
+            error_code = None
+            param = None
             try:
                 payload = response.json()
             except ValueError:
@@ -90,12 +111,25 @@ def _request_responses_api(*, api_key: str, body: dict[str, Any]) -> dict[str, A
                 error = payload.get("error")
                 if isinstance(error, dict):
                     message = str(error.get("message", "")).strip()
-                    code = str(error.get("code", "")).strip()
-                    param = str(error.get("param", "")).strip()
-                    parts = [part for part in (message, f"code={code}" if code else "", f"param={param}" if param else "") if part]
+                    error_code = str(error.get("code", "")).strip() or None
+                    param = str(error.get("param", "")).strip() or None
+                    parts = [
+                        part
+                        for part in (
+                            message,
+                            f"code={error_code}" if error_code else "",
+                            f"param={param}" if param else "",
+                        )
+                        if part
+                    ]
                     if parts:
                         detail = " | ".join(parts)
-            raise RuntimeError(f"OpenAI Responses API failed ({response.status_code}): {detail}")
+            raise OpenAIAPIError(
+                status_code=response.status_code,
+                detail=detail,
+                error_code=error_code,
+                param=param,
+            )
         return response.json()
 
 
