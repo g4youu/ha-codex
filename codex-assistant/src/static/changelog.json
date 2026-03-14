@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "version": "v0.4.2",
+      "date": "2026-03-13",
+      "notes": [
+        "Prevented false success chat replies when no actionable operations exist",
+        "Added prepared/simulated/executed action guidance in assistant responses",
+        "Added proposed/executed action counts in chat payload",
+        "Allowed panel dry-run toggle to override dry-run per request",
+        "Updated default model to gpt-5"
+      ]
+    },
+    {
       "version": "v0.4.1",
       "date": "2026-03-13",
       "notes": [

@@ -1,6 +1,6 @@
 name: "Codex Assistant"
 description: "Secure AI-assisted Home Assistant chat and automation assistant"
-version: "0.4.1"
+version: "0.4.2"
 slug: "codex_assistant"
 url: "https://github.com/g4youu/ha-codex.git"
 arch:
@@ -25,7 +25,7 @@ map:
 options:
   log_level: info
   openai_api_key: ""
-  model: "gpt-5-mini"
+  model: "gpt-5"
   dry_run: true
   require_manual_approval: true
   approval_phrase: "APPLY"

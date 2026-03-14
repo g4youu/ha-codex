@@ -50,7 +50,7 @@ ENTITY_ID_PATTERN = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 
 app = FastAPI(
     title="Codex Assistant",
-    version="0.4.1",
+    version="0.4.2",
     description="Safe Home Assistant assistant API for chat, service actions, and YAML edits.",
 )
 if STATIC_DIR.exists():
@@ -70,7 +70,9 @@ def _is_yaml(path: Path) -> bool:
 
 
 def _effective_dry_run(request_dry_run: bool | None) -> bool:
-    return SETTINGS.dry_run or bool(request_dry_run)
+    if request_dry_run is None:
+        return SETTINGS.dry_run
+    return bool(request_dry_run)
 
 
 def _read_for_ai_context(path: Path) -> str:
@@ -224,6 +226,16 @@ def _normalize_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
             continue
         normalized.append({"role": role, "content": content[:4000]})
     return normalized
+
+
+def _looks_like_action_request(message: str) -> bool:
+    lowered = message.lower()
+    return bool(
+        re.search(
+            r"\b(turn|switch|toggle|set|run|start|stop|restart|create|make|build|add|remove|delete|update|edit|write|save|apply|fix|troubleshoot)\b",
+            lowered,
+        )
+    )
 
 
 def _chat_file_context(request: ChatRequest) -> dict[str, str]:
@@ -631,9 +643,18 @@ def _run_chat(request: ChatRequest) -> dict[str, Any]:
         requested_max_service_calls=requested_max_service_calls,
     )
 
+    proposed_action_count = len(prepared_file_ops) + len(prepared_service_calls)
+    if _looks_like_action_request(message) and proposed_action_count == 0:
+        assistant_message = (
+            "I did not generate actionable Home Assistant changes for that request yet. "
+            "Try a more explicit target, for example \"turn on light.kitchen\" or "
+            "\"update ui-lovelace.yaml with a new dashboard section\"."
+        )
+
     dry_run = _effective_dry_run(request.dry_run)
     execution_results: dict[str, Any] | None = None
     executed = False
+    executed_action_count = 0
 
     if request.execute:
         action_count = len(prepared_file_ops) + len(prepared_service_calls)
@@ -724,6 +745,12 @@ def _run_chat(request: ChatRequest) -> dict[str, Any]:
             "service_calls": service_results,
         }
         executed = not dry_run
+        if not dry_run:
+            executed_action_count = sum(
+                1
+                for item in (file_results + service_results)
+                if item.get("applied") and not item.get("dry_run")
+            )
         append_audit(
             action="chat_execute",
             payload={
@@ -733,12 +760,26 @@ def _run_chat(request: ChatRequest) -> dict[str, Any]:
             },
         )
 
+    if proposed_action_count > 0 and not request.execute:
+        assistant_message = (
+            f"{assistant_message} Prepared {proposed_action_count} action(s). "
+            "Enable 'Execute proposed actions now' to apply them."
+        )
+    elif proposed_action_count > 0 and request.execute and dry_run:
+        assistant_message = (
+            f"{assistant_message} Simulated {proposed_action_count} action(s) in dry-run mode only."
+        )
+    elif executed_action_count > 0:
+        assistant_message = f"{assistant_message} Executed {executed_action_count} action(s)."
+
     append_audit(
         action="chat",
         payload={
             "message_length": len(message),
             "returned_file_operations": len(prepared_file_ops),
             "returned_service_calls": len(prepared_service_calls),
+            "proposed_action_count": proposed_action_count,
+            "executed_action_count": executed_action_count,
             "execute_requested": request.execute,
             "dry_run": dry_run,
             "source": model_source,
@@ -753,6 +794,8 @@ def _run_chat(request: ChatRequest) -> dict[str, Any]:
         "dry_run": dry_run,
         "execute_requested": request.execute,
         "executed": executed,
+        "proposed_action_count": proposed_action_count,
+        "executed_action_count": executed_action_count,
         "file_operations": [
             {
                 "path": entry["path"],

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.2 - 2026-03-13
+- Fixed chat behavior so action-like requests no longer report success when zero actionable operations were generated.
+- Added explicit assistant guidance when actions are only prepared (not executed) or simulated in dry-run mode.
+- Added proposed/executed action counts to chat response payload for clear status tracking.
+- Updated request dry-run handling so panel toggle can override global dry-run per request.
+- Changed default model from `gpt-5-mini` to `gpt-5`.
+
 ## v0.4.1 - 2026-03-13
 - Added local fallback mode for common Home Assistant control commands (`turn on/off`, `toggle`, entity/status checks) when OpenAI is unavailable or quota-limited.
 - Added explicit execution review confirmation and optional execution PIN guard for non-dry-run chat execution.

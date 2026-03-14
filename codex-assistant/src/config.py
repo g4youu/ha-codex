@@ -117,7 +117,7 @@ def load_settings() -> Settings:
     )
     return Settings(
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-5-mini").strip() or "gpt-5-mini",
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-5").strip() or "gpt-5",
         dry_run=_as_bool(os.getenv("DRY_RUN"), default=True),
         log_level=os.getenv("LOG_LEVEL", "info").strip().lower() or "info",
         require_manual_approval=_as_bool(os.getenv("REQUIRE_MANUAL_APPROVAL"), default=True),
